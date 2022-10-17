@@ -1,4 +1,3 @@
-# AutismWare
 **Injecting**
 
 Set your game to windowed fullscreen or you will crash.
