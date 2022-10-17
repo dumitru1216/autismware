@@ -291,9 +291,6 @@ namespace Engine {
 		// get last move time.
 		float delta = player->m_flAnimationTime() - g_ResolverData[player->EntIndex()].m_sMoveData.m_flAnimTime;
 
-		if (GetChokedPackets(player) > 1) // no more dumping os.
-			record->m_angEyeAngles.x = 89.f;
-
 		// get predicted away angle for the player.
 		Vector angAway;
 		Math::VectorAngles(local->m_vecOrigin() - record->m_vecOrigin, angAway);
@@ -315,13 +312,15 @@ namespace Engine {
 			}
 		}
 
+		if (GetChokedPackets(player) > 1 && !(record->m_angEyeAngles.x < -12.f)) // no more dumping os (but allow up pitch)
+			record->m_angEyeAngles.x = 89.f;
+
 		// anim layer lby break detect thx nugsy.
 		if (anim_data->m_AnimationRecord.size() >= 2)
 		{
 			auto prev = &anim_data->m_AnimationRecord.at(1);
 			if (record->m_serverAnimOverlays[3].m_flCycle < 0.01f && prev->m_serverAnimOverlays[3].m_flCycle > 0.01f)
 			{
-				record->m_iResolverMode = 1337;
 				record->m_resolver_mode = XorStr("flick");
 				record->m_resolver_mode2 = XorStr("FLICK");
 				record->m_angLastFlick.y = record->m_angEyeAngles.y = player->m_flLowerBodyYawTarget();
@@ -331,7 +330,6 @@ namespace Engine {
 
 		if (player->m_flAnimationTime() >= Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate && pLagData->m_iMissedShotsLBY < 2 || act == 979)
 		{
-			record->m_iResolverMode = 1337;
 			record->m_resolver_mode = XorStr("flick 979");
 			record->m_resolver_mode2 = XorStr("FLICK 979");
 			record->m_angLastFlick.y = record->m_angEyeAngles.y = player->m_flLowerBodyYawTarget();

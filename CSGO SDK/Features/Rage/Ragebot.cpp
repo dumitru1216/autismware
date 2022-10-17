@@ -1424,6 +1424,9 @@ namespace Interfaces
 			mindmg = m_rage_data->rbot->min_damage_override_amount > 100 ? hp + (m_rage_data->rbot->min_damage_override_amount - 100) : m_rage_data->rbot->min_damage_override_amount;
 		}
 
+		if (hp < mindmg)
+			mindmg = hp;
+
 		if (mindmg < 100 && !lethalx2 && !lethal)
 			mindmg = std::ceil((mindmg / 100.f) * hp);
 		else if (mindmg == 100)
@@ -1512,21 +1515,26 @@ namespace Interfaces
 
 							player_info_t info;
 							if (Interfaces::m_pEngine->GetPlayerInfo(bestPoint->target->player->EntIndex(), &info)) {
-								int ping = 0;
+								//int ping = 0;
 
-								auto netchannel = Encrypted_t<INetChannel>(Interfaces::m_pEngine->GetNetChannelInfo());
+								int backtrackedticks = Interfaces::m_pGlobalVars->tickcount - TIME_TO_TICKS(bestPoint->target->record->m_flSimulationTime);
+								
+								if (backtrackedticks < 0)
+									backtrackedticks = 0;
+
+								/*auto netchannel = Encrypted_t<INetChannel>(Interfaces::m_pEngine->GetNetChannelInfo());
 								if (!netchannel.IsValid())
 									ping = 0;
 								else
 									ping = static_cast<int>(netchannel->GetLatency(FLOW_OUTGOING) * 1000.0f);
+								*/
 
 								msg << XorStr("Fired shot at ");
 								msg << FixedStrLength(info.szName).data();
 								msg << XorStr("'s ") << TranslateHitbox(bestPoint->hitboxIndex).c_str() << XorStr("(") << int(bestPoint->pointscale * 100.f) << XorStr("%%%%)") << XorStr(" for ");
 								msg << int(bestPoint->damage) << " damage, ";
 
-								msg << XorStr("flick: ") << int(bestPoint->target->record->m_iResolverMode == 1337) << XorStr(" | ");
-								msg << XorStr("bt: ") << Interfaces::m_pGlobalVars->tickcount - TIME_TO_TICKS(bestPoint->target->record->m_flSimulationTime) << XorStr(" | ");
+								msg << XorStr("bt: ") << backtrackedticks << XorStr(" | ");
 								msg << XorStr("hc: ") << int(bestPoint->hitchance);
 
 
