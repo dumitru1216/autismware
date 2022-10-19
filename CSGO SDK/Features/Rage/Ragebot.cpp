@@ -1734,7 +1734,7 @@ namespace Interfaces
 		//aim_target.animrecord = animrecord;
 		aim_target.backup = backup;
 		aim_target.preferBody = (m_rage_data->rbot->prefer_body);
-		aim_target.preferHead = record->m_vecVelocity.Length() > 0.1f && !aim_target.preferBody;
+		aim_target.preferHead = record->int_resolver_mode == 3 || record->m_vecVelocity.Length() > 0.1f;
 
 		auto addedPoints = 0;
 		for (int i = 0; i < HITBOX_MAX; i++) {

@@ -143,6 +143,7 @@ namespace Engine {
 		record->m_iResolverMode = EResolverModes::RESOLVE_FREESTAND;
 		record->m_resolver_mode = XorStr("freestand");
 		record->m_resolver_mode2 = XorStr("FREESTAND");
+		record->int_resolver_mode = 7;
 
 		// constants
 		constexpr float STEP{ 4.f };
@@ -323,6 +324,7 @@ namespace Engine {
 			{
 				record->m_resolver_mode = XorStr("flick");
 				record->m_resolver_mode2 = XorStr("FLICK");
+				record->int_resolver_mode = 1;
 				record->m_angLastFlick.y = record->m_angEyeAngles.y = player->m_flLowerBodyYawTarget();
 				Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + Interfaces::m_pGlobalVars->interval_per_tick + TIME_TO_TICKS(player->m_flSimulationTime() - prev->m_serverAnimOverlays[3].m_flCycle);
 			}
@@ -332,6 +334,7 @@ namespace Engine {
 		{
 			record->m_resolver_mode = XorStr("flick 979");
 			record->m_resolver_mode2 = XorStr("FLICK 979");
+			record->int_resolver_mode = 2;
 			record->m_angLastFlick.y = record->m_angEyeAngles.y = player->m_flLowerBodyYawTarget();
 			Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 1.1 + Interfaces::m_pGlobalVars->interval_per_tick;
 		}
@@ -341,6 +344,7 @@ namespace Engine {
 			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
 			record->m_resolver_mode = XorStr("last move 1");
 			record->m_resolver_mode2 = XorStr("LAST MOVE 1");
+			record->int_resolver_mode = 3;
 			record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
 		}
 		else if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && delta > 1.1f && !ShouldUseFreestand(player, record)) // if in open.
@@ -348,6 +352,7 @@ namespace Engine {
 			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
 			record->m_resolver_mode = XorStr("last move 2");
 			record->m_resolver_mode2 = XorStr("LAST MOVE 2");
+			record->int_resolver_mode = 4;
 			record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
 		}
 		else
@@ -362,6 +367,7 @@ namespace Engine {
 				record->m_iResolverMode = EResolverModes::RESOLVE_BRUTEFORCE;
 				record->m_resolver_mode = XorStr("bruteforce 1");
 				record->m_resolver_mode2 = XorStr("BRUTE 1");
+				record->int_resolver_mode = 5;
 				switch (pLagData->m_iMissedShotsBrute % 2) {
 
 				case 0:
@@ -382,6 +388,7 @@ namespace Engine {
 				record->m_iResolverMode = EResolverModes::RESOLVE_BRUTEFORCE;
 				record->m_resolver_mode = XorStr("bruteforce 2");
 				record->m_resolver_mode2 = XorStr("BRUTE 2");
+				record->int_resolver_mode = 6;
 				switch (pLagData->m_iMissedShotsBrute % 3) {
 
 				case 0:
