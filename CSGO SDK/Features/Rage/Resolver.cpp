@@ -434,16 +434,16 @@ namespace Engine {
 			if (record->m_serverAnimOverlays[3].m_flCycle < 0.01f && prev->m_serverAnimOverlays[3].m_flCycle > 0.01f)
 			{
 				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
-				record->m_resolver_mode = XorStr("flick 1");
-				record->m_resolver_mode2 = XorStr("AAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+				record->m_resolver_mode = XorStr("flick");
+				record->m_resolver_mode2 = XorStr("FLICK");
 				Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + Interfaces::m_pGlobalVars->interval_per_tick + TIME_TO_TICKS(player->m_flSimulationTime() - prev->m_serverAnimOverlays[3].m_flCycle);
 				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
 			}
 			else if (player->m_flAnimationTime() >= Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate)
 			{
 				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
-				record->m_resolver_mode = XorStr("flick 2");
-				record->m_resolver_mode2 = XorStr("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+				record->m_resolver_mode = XorStr("flick");
+				record->m_resolver_mode2 = XorStr("FLICK");
 				Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 1.1f;
 				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
 			}
