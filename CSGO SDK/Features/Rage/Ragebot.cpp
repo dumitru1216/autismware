@@ -1534,6 +1534,7 @@ namespace Interfaces
 								msg << XorStr("'s ") << TranslateHitbox(bestPoint->hitboxIndex).c_str() << XorStr("(") << int(bestPoint->pointscale * 100.f) << XorStr("%%%%)") << XorStr(" for ");
 								msg << int(bestPoint->damage) << " damage, ";
 
+								msg << XorStr("flick: ") << int(bestPoint->target->record->m_iResolverMode == 7) << XorStr(" | ");
 								msg << XorStr("bt: ") << backtrackedticks << XorStr(" | ");
 								msg << XorStr("hc: ") << int(bestPoint->hitchance);
 
@@ -1734,7 +1735,8 @@ namespace Interfaces
 		//aim_target.animrecord = animrecord;
 		aim_target.backup = backup;
 		aim_target.preferBody = (m_rage_data->rbot->prefer_body);
-		aim_target.preferHead = record->int_resolver_mode == 3 || record->m_vecVelocity.Length() > 0.1f;
+		//									last move							 flick	
+		aim_target.preferHead = int(record->m_iResolverMode == 4) || int(record->m_iResolverMode == 7) || record->m_vecVelocity.Length() > 0.1f;
 
 		auto addedPoints = 0;
 		for (int i = 0; i < HITBOX_MAX; i++) {

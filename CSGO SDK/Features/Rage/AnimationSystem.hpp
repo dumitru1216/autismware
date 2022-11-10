@@ -69,7 +69,6 @@ namespace Engine
 		float m_flFeetCycle;
 
 		int m_iResolverMode;
-		int int_resolver_mode;
 		std::string m_resolver_mode;
 		std::string m_resolver_mode2;
 		C_AnimationLayer m_serverAnimOverlays[13];

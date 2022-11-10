@@ -207,7 +207,7 @@ void C_GameEvent::FireGameEvent(IGameEvent* pEvent) {
 
 						msg << XorStr("Harmed by ") << attacker_info.szName << XorStr(" for ") << dmg_to_health << XorStr(" in ") << HitgroupToString(hitgroup).data();
 
-						ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(255, 255, 255), true, XorStr(""));
+						ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(255, 128, 128), true, XorStr(""));
 					}
 
 					g_Vars.globals.m_bLocalPlayerHarmedThisTick = true;
@@ -219,7 +219,7 @@ void C_GameEvent::FireGameEvent(IGameEvent* pEvent) {
 
 					msg << XorStr("Hit ") << enemy_info.szName << XorStr(" in the ") << HitgroupToString(hitgroup).data() << XorStr(" for ") << dmg_to_health << " damage (" << remaining_health << " health remaining)";
 
-					ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(255, 255, 255), true, XorStr(""));
+					ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(75, 255, 75), true, XorStr(""));
 				}
 
 				if (g_Vars.misc.hitsound) {

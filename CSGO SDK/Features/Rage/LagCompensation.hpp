@@ -57,7 +57,6 @@ namespace Engine
 		int m_iFlags;
 		int m_iLaggedTicks = 0;
 		int m_iResolverMode;
-		int int_resolver_mode;
 
 		float m_flInterpolateTime = 0.f;
 

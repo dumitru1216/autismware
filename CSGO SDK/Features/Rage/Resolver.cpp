@@ -140,11 +140,6 @@ namespace Engine {
 		if (!fake)
 			return;
 
-		record->m_iResolverMode = EResolverModes::RESOLVE_FREESTAND;
-		record->m_resolver_mode = XorStr("freestand");
-		record->m_resolver_mode2 = XorStr("FREESTAND");
-		record->int_resolver_mode = 7;
-
 		// constants
 		constexpr float STEP{ 4.f };
 		constexpr float RANGE{ 32.f };
@@ -162,17 +157,11 @@ namespace Engine {
 		Vector angAway;
 		Math::VectorAngles(pLocal->m_vecOrigin() - m_vecOrigin, angAway);
 
-		// get anim data.
-		auto animLayer = player->m_AnimOverlay().Element(1);
-		int act = record->m_serverAnimOverlays[3].m_nSequence;
-
-		float lby = record->m_flLowerBodyYawTarget;
-
 		// construct vector of angles to test.
 		std::vector< AdaptiveAngle > angles{ };
-		angles.emplace_back(angAway.y + 190.f);
-		angles.emplace_back(angAway.y + 100.f);
-		angles.emplace_back(angAway.y - 80.f);
+		angles.emplace_back(angAway.y + 180.f);
+		angles.emplace_back(angAway.y + 90.f);
+		angles.emplace_back(angAway.y - 90.f);
 
 		// start the trace at the your shoot pos.
 		Vector start = g_Vars.globals.m_vecFixedEyePosition;
@@ -256,9 +245,10 @@ namespace Engine {
 		// the best angle should be at the front now.
 		AdaptiveAngle* best = &angles.front();
 
-		// fix trying to override lby limits
-		if (act != 979)
-			Math::Clamp(best->m_yaw, lby - 100, lby + 100);
+		// set mode.
+		record->m_iResolverMode = EResolverModes::RESOLVE_FREESTAND;
+		record->m_resolver_mode = XorStr("freestand");
+		record->m_resolver_mode2 = XorStr("FREESTAND");
 
 		// set angles.
 		if (lag_data->m_iMissedShotsFreestand < 1)
@@ -288,13 +278,13 @@ namespace Engine {
 
 		// get records.
 		auto anim_data = AnimationSystem::Get()->GetAnimationData(player->m_entIndex);
-
+		
 		// get last move time.
 		float delta = player->m_flAnimationTime() - g_ResolverData[player->EntIndex()].m_sMoveData.m_flAnimTime;
 
 		// get predicted away angle for the player.
 		Vector angAway;
-		Math::VectorAngles(local->m_vecOrigin() - record->m_vecOrigin, angAway);
+		Math::VectorAngles(local->m_vecOrigin() - player->m_vecOrigin(), angAway);
 
 		// get lag data.
 		Encrypted_t<Engine::C_EntityLagData> pLagData = Engine::LagCompensation::Get()->GetLagData(player->EntIndex());
@@ -313,38 +303,11 @@ namespace Engine {
 			}
 		}
 
-		if (GetChokedPackets(player) > 1 && !(record->m_angEyeAngles.x < -12.f)) // no more dumping os (but allow up pitch)
-			record->m_angEyeAngles.x = 89.f;
-
-		// anim layer lby break detect thx nugsy.
-		if (anim_data->m_AnimationRecord.size() >= 2)
-		{
-			auto prev = &anim_data->m_AnimationRecord.at(1);
-			if (record->m_serverAnimOverlays[3].m_flCycle < 0.01f && prev->m_serverAnimOverlays[3].m_flCycle > 0.01f)
-			{
-				record->m_resolver_mode = XorStr("flick");
-				record->m_resolver_mode2 = XorStr("FLICK");
-				record->int_resolver_mode = 1;
-				record->m_angLastFlick.y = record->m_angEyeAngles.y = player->m_flLowerBodyYawTarget();
-				Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + Interfaces::m_pGlobalVars->interval_per_tick + TIME_TO_TICKS(player->m_flSimulationTime() - prev->m_serverAnimOverlays[3].m_flCycle);
-			}
-		}
-
-		if (player->m_flAnimationTime() >= Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate && pLagData->m_iMissedShotsLBY < 2 || act == 979)
-		{
-			record->m_resolver_mode = XorStr("flick 979");
-			record->m_resolver_mode2 = XorStr("FLICK 979");
-			record->int_resolver_mode = 2;
-			record->m_angLastFlick.y = record->m_angEyeAngles.y = player->m_flLowerBodyYawTarget();
-			Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 1.1 + Interfaces::m_pGlobalVars->interval_per_tick;
-		}
-
 		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && delta < 1.1f) // expire last move after 1.1 secs.
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
 			record->m_resolver_mode = XorStr("last move 1");
 			record->m_resolver_mode2 = XorStr("LAST MOVE 1");
-			record->int_resolver_mode = 3;
 			record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
 		}
 		else if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && delta > 1.1f && !ShouldUseFreestand(player, record)) // if in open.
@@ -352,7 +315,6 @@ namespace Engine {
 			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
 			record->m_resolver_mode = XorStr("last move 2");
 			record->m_resolver_mode2 = XorStr("LAST MOVE 2");
-			record->int_resolver_mode = 4;
 			record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
 		}
 		else
@@ -367,7 +329,6 @@ namespace Engine {
 				record->m_iResolverMode = EResolverModes::RESOLVE_BRUTEFORCE;
 				record->m_resolver_mode = XorStr("bruteforce 1");
 				record->m_resolver_mode2 = XorStr("BRUTE 1");
-				record->int_resolver_mode = 5;
 				switch (pLagData->m_iMissedShotsBrute % 2) {
 
 				case 0:
@@ -377,9 +338,8 @@ namespace Engine {
 				case 1:
 					record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget - 35.f;
 					break;
-
+				
 				default:
-					record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
 					break;
 				}
 			}
@@ -388,7 +348,6 @@ namespace Engine {
 				record->m_iResolverMode = EResolverModes::RESOLVE_BRUTEFORCE;
 				record->m_resolver_mode = XorStr("bruteforce 2");
 				record->m_resolver_mode2 = XorStr("BRUTE 2");
-				record->int_resolver_mode = 6;
 				switch (pLagData->m_iMissedShotsBrute % 3) {
 
 				case 0:
@@ -404,9 +363,89 @@ namespace Engine {
 					break;
 
 				default:
-					record->m_angEyeAngles.y = angAway.y + 180.f;
 					break;
 				}
+			}
+		}
+	}
+
+	void CResolver::PredictBodyUpdates(C_CSPlayer* player, C_AnimationRecord* record, C_AnimationRecord* prev) 
+	{
+		auto local = C_CSPlayer::GetLocalPlayer();
+		if (!local)
+			return;
+
+		if (!(local->m_fFlags() & FL_ONGROUND))
+			return;
+
+		// nah
+		if (local->IsDead()) {
+			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
+			Engine::g_ResolverData[player->EntIndex()].m_bCollectedValidMoveData = false;
+			return;
+		}
+
+		// we have no reliable move data, we can't predict
+		if (!Engine::g_ResolverData[player->EntIndex()].m_bCollectedValidMoveData) {
+			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
+			return;
+		}
+
+		// lol
+		if (record->m_bFakeFlicking) {
+			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
+			Engine::g_ResolverData[player->EntIndex()].m_bCollectedValidMoveData = false;
+			return;
+		}
+
+		// get lag data about this player
+		Encrypted_t<Engine::C_EntityLagData> pLagData = Engine::LagCompensation::Get()->GetLagData(player->m_entIndex);
+		if (!pLagData.IsValid()) {
+			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
+			return;
+		}
+
+		// get records.
+		auto anim_data = AnimationSystem::Get()->GetAnimationData(player->m_entIndex);
+
+		// inform esp that we're about to be the prediction process
+		Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = true;
+
+		// check if the player is walking
+		if (record->m_vecVelocity.Length() > 0.1f && !record->m_bFakeWalking) {
+			// predict the first flick they have to do after they stop moving
+			Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 0.22f;
+			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
+			return;
+		}
+
+		// anim layer lby break detect thx nugsy.
+		if (anim_data->m_AnimationRecord.size() >= 2)
+		{
+			if (record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget && player->m_flAnimationTime() < Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate)
+			{
+				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
+				record->m_resolver_mode = XorStr("distortion");
+				record->m_resolver_mode2 = XorStr("DISTORT");
+				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
+				return;
+			}
+			
+			if (record->m_serverAnimOverlays[3].m_flCycle < 0.01f && prev->m_serverAnimOverlays[3].m_flCycle > 0.01f)
+			{
+				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
+				record->m_resolver_mode = XorStr("flick 1");
+				record->m_resolver_mode2 = XorStr("AAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+				Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + Interfaces::m_pGlobalVars->interval_per_tick + TIME_TO_TICKS(player->m_flSimulationTime() - prev->m_serverAnimOverlays[3].m_flCycle);
+				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
+			}
+			else if (player->m_flAnimationTime() >= Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate)
+			{
+				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
+				record->m_resolver_mode = XorStr("flick 2");
+				record->m_resolver_mode2 = XorStr("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC");
+				Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 1.1f;
+				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
 			}
 		}
 	}
@@ -462,33 +501,11 @@ namespace Engine {
 			ResolveStand(player, record);
 			return;
 		}
-
-		// get reso data.
-		auto& data = g_ResolverData[player->EntIndex()];
-
-		// get predicted away angle for the player.
-		Vector angAway;
-		Math::VectorAngles(local->m_vecOrigin() - record->m_vecOrigin, angAway);
-
+		
 		record->m_iResolverMode = RESOLVE_AIR;
 		record->m_resolver_mode = XorStr("air");
-		// todo: fix angles going forward on land
-		if ((angAway.y + 180.f) - record->m_flLowerBodyYawTarget < 45.f ||
-			record->m_flLowerBodyYawTarget - (angAway.y + 180.f) < 45.f) // most likely not breaking lby in air.
-		{
-			record->m_angEyeAngles.y = record->m_flLowerBodyYawTarget;
-			record->m_resolver_mode2 = XorStr("AIR LBY");
-		}
-		else if (data.m_bCollectedValidMoveData && data.m_sMoveData.m_flLowerBodyYawTarget - record->m_flLowerBodyYawTarget < 45.f ||
-			record->m_flLowerBodyYawTarget - data.m_sMoveData.m_flLowerBodyYawTarget < 45.f)
-		{
-			record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
-			record->m_resolver_mode2 = XorStr("AIR LM");
-		}
-		else {
-			record->m_angEyeAngles.y = angAway.y + 180.f;
-			record->m_resolver_mode2 = XorStr("AIR");
-		}
+		record->m_resolver_mode2 = XorStr("AIR");
+		record->m_angEyeAngles.y = record->m_flLowerBodyYawTarget;
 	}
 
 	void CResolver::ResolveManual(C_CSPlayer* player, C_AnimationRecord* record, bool bDisallow)

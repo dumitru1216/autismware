@@ -1399,17 +1399,19 @@ void CEsp::AmmoBar(C_CSPlayer* player, BBox_t bbox) {
 	}
 
 	auto local = C_CSPlayer::GetLocalPlayer();
+
 	if (g_Vars.esp.draw_lby_bar && !local->IsDead() && Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates) {
 		int current = pWeapon->m_iClip1();
 		int max = pWeaponData->m_iMaxClip;
 		float scale;
+
 		float flUpdateTime = Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate - player->m_flAnimationTime();
 
 		// check for pred.
 		scale = (1.1f - flUpdateTime) / 1.1f;
 
 		// relative to bar.
-		int bar = Math::Clamp((int)std::round((bbox.w - 2) * scale), 0, bbox.w - 2);
+		int bar = std::clamp((int)std::round((bbox.w - 2) * scale), 0, bbox.w - 2);
 
 		// draw.
 		Render::Engine::RectFilled(bbox.x, bbox.y + bbox.h + 2 + index, bbox.w, 4, Color(0, 0, 0, 180 * this->m_flAlpha[player->EntIndex()]));

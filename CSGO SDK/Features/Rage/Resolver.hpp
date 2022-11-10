@@ -11,11 +11,9 @@ namespace Engine {
 		RESOLVE_STAND,
 		RESOLVE_FREESTAND,
 		RESOLVE_LAST_LBY,
-		RESOLVE_DISTORT,
 		RESOLVE_BRUTEFORCE,
 		RESOLVE_AIR,
 		RESOLVE_LBY_UPDATE,
-		RESOLVE_STOPPED_MOVING,
 	};
 
 	struct CResolverData {
@@ -59,7 +57,7 @@ namespace Engine {
 	public:
 		void ResolveManual(C_CSPlayer* player, C_AnimationRecord* record, bool bDisallow = false);
 		void ResolveYaw(C_CSPlayer* player, C_AnimationRecord* record);
-
+		void PredictBodyUpdates(C_CSPlayer* player, C_AnimationRecord* record, C_AnimationRecord* prev);
 	public:
 		// check if the players yaw is sideways.
 		bool IsLastMoveValid(C_AnimationRecord* record, float m_yaw) {

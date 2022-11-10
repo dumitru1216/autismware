@@ -536,6 +536,8 @@ namespace Engine
 
 				g_Resolver.ResolveYaw(player, current.Xor());
 
+				// predict lby updates
+				g_Resolver.PredictBodyUpdates(player, current.Xor(), previous.Xor());
 
 				bool bValid = previous.Xor();
 
@@ -544,12 +546,12 @@ namespace Engine
 				{
 
 					bool running = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_WALK && current.Xor()->m_vecVelocity.Length() > 70.f;
-					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == 1337 ||
+					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE ||
 						running;
 				}
 				else
 				{
-					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == 1337 || current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_WALK;
+					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE || current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_WALK;
 				}
 
 				bool bResolved = current.Xor()->m_bResolved;

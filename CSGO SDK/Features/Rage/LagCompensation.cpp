@@ -238,7 +238,6 @@ namespace Engine
 		record->m_iLaggedTicks = TIME_TO_TICKS(player->m_flSimulationTime() - player->m_flOldSimulationTime());
 		record->m_bResolved = anim_record->m_bResolved;
 		record->m_iResolverMode = anim_record->m_iResolverMode;
-		record->int_resolver_mode = anim_record->int_resolver_mode;
 
 		std::memcpy(record->m_BoneMatrix, anim_data->m_Bones, player->m_CachedBoneData().Count() * sizeof(matrix3x4_t));
 	}

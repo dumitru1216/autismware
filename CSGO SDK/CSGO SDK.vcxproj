@@ -68,6 +68,7 @@
       <StringPooling>
       </StringPooling>
       <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>$(DXSDK_DIR)LIB\x86</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>

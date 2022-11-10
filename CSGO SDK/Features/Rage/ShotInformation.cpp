@@ -225,20 +225,20 @@ namespace Engine
 
 							msg << XorStr("Missed shot due to ") << reason.data();
 
-							ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(255, 128, 128, 255), true);
+							ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(255, 255, 25, 255), true);
 
 						}
 						else if (Interfaces::m_pEngine->GetPlayerInfo(it->snapshot->playerIdx, &info) && td->is_resolver_issue)
 						{
 							msg << XorStr("Missed shot with ") << prev->m_resolver_mode << XorStr(" resolver");
 
-							ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(255, 128, 128, 255), true);
+							ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(255, 255, 25, 255), true);
 						}
 					};
 
 					if (td->is_resolver_issue) {
 
-						if (it->snapshot->ResolverType == 1337)
+						if (it->snapshot->ResolverType == (EResolverModes::RESOLVE_LBY_UPDATE))
 							++lag_data->m_iMissedShotsLBY;
 						else if (it->snapshot->ResolverType == EResolverModes::RESOLVE_LAST_LBY)
 							++lag_data->m_iMissedShotsLastmove;
@@ -248,8 +248,6 @@ namespace Engine
 							++lag_data->m_iMissedShotsBrute;
 						else if (it->snapshot->ResolverType == EResolverModes::RESOLVE_AIR)
 							++lag_data->m_iMissedShotsAir;
-						else if (it->snapshot->ResolverType == EResolverModes::RESOLVE_DISTORT)
-							++lag_data->m_iMissedShotsDistort;
 						else
 							++lag_data->m_iMissedShots;
 

@@ -314,7 +314,7 @@ namespace Menu {
 						{ XorStr("Defusing"), &g_Vars.esp.draw_defusing },
 						{ XorStr("Distance"), &g_Vars.esp.draw_distance },
 						{ XorStr("Grenade pin"), &g_Vars.esp.draw_grenade_pin },
-						{ XorStr("Resolved"), &g_Vars.esp.draw_resolver },
+						{ XorStr("Resolver mode"), &g_Vars.esp.draw_resolver },
 					};
 
 					GUI::Controls::MultiDropdown(XorStr("Flags"), flags);

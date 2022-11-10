@@ -339,6 +339,8 @@
       <Filter>Features\Engine</Filter>
     </ClCompile>
     <ClCompile Include="Features\Rage\Resolver.cpp" />
+    <ClCompile Include="SDK\Classes\IInputSystem.cpp" />
+    <ClCompile Include="Utils\Math.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="source.hpp">
