@@ -238,7 +238,7 @@ namespace Engine
 
 					if (td->is_resolver_issue) {
 
-						if (it->snapshot->ResolverType == (EResolverModes::RESOLVE_LBY_UPDATE))
+						if (it->snapshot->ResolverType == EResolverModes::RESOLVE_LBY_UPDATE)
 							++lag_data->m_iMissedShotsLBY;
 						else if (it->snapshot->ResolverType == EResolverModes::RESOLVE_LAST_LBY)
 							++lag_data->m_iMissedShotsLastmove;
