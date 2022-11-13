@@ -30,16 +30,17 @@ namespace Engine {
 	{
 		bool fake = GetChokedPackets(player) > 1;
 
-		if (record->m_iResolverMode == EResolverModes::RESOLVE_WALK && fake)
-			ResolveWalk(player, record);
+		if (fake) {
+			if (record->m_iResolverMode == EResolverModes::RESOLVE_WALK)
+				ResolveWalk(player, record);
 
-		else if (record->m_iResolverMode == EResolverModes::RESOLVE_STAND && fake)
-			ResolveStand(player, record);
+			else if (record->m_iResolverMode == EResolverModes::RESOLVE_STAND)
+				ResolveStand(player, record);
 
-		else if (record->m_iResolverMode == EResolverModes::RESOLVE_AIR && fake)
-			ResolveAir(player, record);
-
-		else if (!fake) // no fake yaw detected.
+			else if (record->m_iResolverMode == EResolverModes::RESOLVE_AIR)
+				ResolveAir(player, record);
+		}
+		else // no fake yaw detected.
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_NONE;
 			record->m_resolver_mode = XorStr("no");
