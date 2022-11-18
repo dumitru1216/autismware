@@ -389,6 +389,10 @@ void CEsp::SpectatorList(bool window) {
 		if (!Interfaces::m_pEngine->GetPlayerInfo(i, &info))
 			continue;
 
+		auto specplayer = player->m_hObserverTarget() == pLocal;
+		if (!specplayer) 
+			continue;
+
 		spectators.push_back(std::string(info.szName).substr(0, 24));
 	}
 
@@ -399,8 +403,6 @@ void CEsp::SpectatorList(bool window) {
 
 		Render::Engine::esp.string(Render::GetScreenSize().x - 5, (i * 14) - 10, { 255, 255, 255, 179 }, name, Render::Engine::ALIGN_RIGHT);
 	}
-
-
 }
 
 void CEsp::Keybinds() {
