@@ -214,25 +214,18 @@ namespace Engine
 					auto impact_distance = it->snapshot->eye_pos.Distance(last_impact);
 					float aimpoint_lenght = it->snapshot->AimPoint.Length();
 					float impact_lenght = last_impact.Length();
-
+					C_CSPlayer* local = C_CSPlayer::GetLocalPlayer();
 					auto td = &trace_data[0];
 
 					auto AddMissLog = [&](std::string reason) -> void {
 						std::stringstream msg;
-						auto prev = &anim_data->m_AnimationRecord.at(1);
 						player_info_t info;
-						if (Interfaces::m_pEngine->GetPlayerInfo(it->snapshot->playerIdx, &info) && !td->is_resolver_issue) {
+						if (Interfaces::m_pEngine->GetPlayerInfo(it->snapshot->playerIdx, &info)) {
 
 							msg << XorStr("Missed shot due to ") << reason.data();
 
 							ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(255, 255, 25, 255), true);
 
-						}
-						else if (Interfaces::m_pEngine->GetPlayerInfo(it->snapshot->playerIdx, &info) && td->is_resolver_issue)
-						{
-							msg << XorStr("Missed shot with ") << prev->m_resolver_mode << XorStr(" resolver");
-
-							ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(255, 255, 25, 255), true);
 						}
 					};
 
@@ -258,6 +251,11 @@ namespace Engine
 					else if (aimpoint_distance > impact_distance) { // occulusion issue
 						if (g_Vars.esp.event_resolver) {
 							AddMissLog(XorStr("occlusion"));
+						}
+					}
+					else if (local->IsDead()) { // dead before shot registers
+						if (g_Vars.esp.event_resolver) {
+							AddMissLog(XorStr("dead"));
 						}
 					}
 					else { // spread issue

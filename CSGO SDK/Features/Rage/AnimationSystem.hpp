@@ -70,7 +70,6 @@ namespace Engine
 
 		int m_iResolverMode;
 		std::string m_resolver_mode;
-		std::string m_resolver_mode2;
 		C_AnimationLayer m_serverAnimOverlays[13];
 	};
 

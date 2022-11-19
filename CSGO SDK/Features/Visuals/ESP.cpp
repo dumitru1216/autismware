@@ -1655,7 +1655,7 @@ void CEsp::DrawInfo(C_CSPlayer* player, BBox_t bbox, player_info_t player_info) 
 		if (!anim_data->m_AnimationRecord.empty()) {
 			auto current = &anim_data->m_AnimationRecord.front();
 			if (current) {
-				g_Vars.globals.m_vecTextInfo[player->EntIndex()].emplace_back(FloatColor(0, 255, 255, (int)(180 * m_flAlpha[player->EntIndex()])), current->m_resolver_mode2);
+				g_Vars.globals.m_vecTextInfo[player->EntIndex()].emplace_back(FloatColor(0, 255, 255, (int)(180 * m_flAlpha[player->EntIndex()])), current->m_resolver_mode);
 			}
 		}
 	}
