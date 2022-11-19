@@ -1525,7 +1525,7 @@ namespace Interfaces
 								std::string resolvermode;
 								int resolver_mode = bestPoint->target->record->m_iResolverMode;
 
-								switch (resolver_mode % 8) {
+								switch (resolver_mode) {
 								case 0:
 									resolvermode = XorStr("no fake"); break;
 								case 1:
