@@ -43,8 +43,7 @@ namespace Engine {
 		else // no fake yaw detected.
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_NONE;
-			record->m_resolver_mode = XorStr("no");
-			record->m_resolver_mode2 = XorStr("");
+			record->m_resolver_mode = XorStr("");
 		}
 	}
 
@@ -248,8 +247,7 @@ namespace Engine {
 
 		// set mode.
 		record->m_iResolverMode = EResolverModes::RESOLVE_FREESTAND;
-		record->m_resolver_mode = XorStr("freestand");
-		record->m_resolver_mode2 = XorStr("FREESTAND");
+		record->m_resolver_mode = XorStr("FREESTAND");
 
 		// set angles.
 		if (lag_data->m_iMissedShotsFreestand < 1)
@@ -307,15 +305,13 @@ namespace Engine {
 		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && delta < 1.1f) // expire last move after 1.1 secs.
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
-			record->m_resolver_mode = XorStr("last move 1");
-			record->m_resolver_mode2 = XorStr("LAST MOVE 1");
+			record->m_resolver_mode = XorStr("LAST MOVE 1");
 			record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
 		}
 		else if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && delta > 1.1f && !ShouldUseFreestand(player, record)) // if in open.
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
-			record->m_resolver_mode = XorStr("last move 2");
-			record->m_resolver_mode2 = XorStr("LAST MOVE 2");
+			record->m_resolver_mode = XorStr("LAST MOVE 2");
 			record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
 		}
 		else
@@ -328,8 +324,7 @@ namespace Engine {
 			else if (data.m_bCollectedValidMoveData) // brute based off last move.
 			{
 				record->m_iResolverMode = EResolverModes::RESOLVE_BRUTEFORCE;
-				record->m_resolver_mode = XorStr("bruteforce 1");
-				record->m_resolver_mode2 = XorStr("BRUTE 1");
+				record->m_resolver_mode = XorStr("BRUTE 1");
 				switch (pLagData->m_iMissedShotsBrute % 2) {
 
 				case 0:
@@ -347,8 +342,7 @@ namespace Engine {
 			else
 			{
 				record->m_iResolverMode = EResolverModes::RESOLVE_BRUTEFORCE;
-				record->m_resolver_mode = XorStr("bruteforce 2");
-				record->m_resolver_mode2 = XorStr("BRUTE 2");
+				record->m_resolver_mode = XorStr("BRUTE 2");
 				switch (pLagData->m_iMissedShotsBrute % 3) {
 
 				case 0:
@@ -426,8 +420,7 @@ namespace Engine {
 			if (record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget && player->m_flAnimationTime() < Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate)
 			{
 				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
-				record->m_resolver_mode = XorStr("distortion");
-				record->m_resolver_mode2 = XorStr("DISTORT");
+				record->m_resolver_mode = XorStr("FLICK");
 				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
 				return;
 			}
@@ -435,16 +428,14 @@ namespace Engine {
 			if (record->m_serverAnimOverlays[3].m_flCycle < 0.01f && prev->m_serverAnimOverlays[3].m_flCycle > 0.01f)
 			{
 				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
-				record->m_resolver_mode = XorStr("flick");
-				record->m_resolver_mode2 = XorStr("FLICK");
+				record->m_resolver_mode = XorStr("FLICK");
 				Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + Interfaces::m_pGlobalVars->interval_per_tick + TIME_TO_TICKS(player->m_flSimulationTime() - prev->m_serverAnimOverlays[3].m_flCycle);
 				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
 			}
 			else if (player->m_flAnimationTime() >= Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate)
 			{
 				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
-				record->m_resolver_mode = XorStr("flick");
-				record->m_resolver_mode2 = XorStr("FLICK");
+				record->m_resolver_mode = XorStr("FLICK");
 				Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 1.1f;
 				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
 			}
@@ -459,8 +450,7 @@ namespace Engine {
 
 		// apply lby to eyeangles.
 		record->m_iResolverMode = EResolverModes::RESOLVE_WALK;
-		record->m_resolver_mode = XorStr("moving");
-		record->m_resolver_mode2 = XorStr("MOVING");
+		record->m_resolver_mode = XorStr("MOVING");
 		record->m_angEyeAngles.y = record->m_flLowerBodyYawTarget;
 		Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
 		Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 0.22f;
@@ -504,8 +494,7 @@ namespace Engine {
 		}
 		
 		record->m_iResolverMode = RESOLVE_AIR;
-		record->m_resolver_mode = XorStr("air");
-		record->m_resolver_mode2 = XorStr("AIR");
+		record->m_resolver_mode = XorStr("AIR");
 		record->m_angEyeAngles.y = record->m_flLowerBodyYawTarget;
 	}
 

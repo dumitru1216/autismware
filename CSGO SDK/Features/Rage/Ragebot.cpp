@@ -1522,25 +1522,42 @@ namespace Interfaces
 								if (backtrackedticks < 0)
 									backtrackedticks = 0;
 
-								/*auto netchannel = Encrypted_t<INetChannel>(Interfaces::m_pEngine->GetNetChannelInfo());
-								if (!netchannel.IsValid())
-									ping = 0;
-								else
-									ping = static_cast<int>(netchannel->GetLatency(FLOW_OUTGOING) * 1000.0f);
-								*/
+								std::string resolvermode;
+								int resolver_mode = bestPoint->target->record->m_iResolverMode;
+
+								switch (resolver_mode % 8) {
+								case 0:
+									resolvermode = XorStr("no fake"); break;
+								case 1:
+									resolvermode = XorStr("moving"); break;
+								case 2: 
+									resolvermode = XorStr("freestand"); break;
+								case 3:
+									resolvermode = XorStr("last move"); break;
+								case 4:
+									resolvermode = XorStr("last move"); break;
+								case 5:
+									resolvermode = XorStr("brute"); break;
+								case 6:
+									resolvermode = XorStr("air"); break;
+								case 7:
+									resolvermode = XorStr("flick"); break;
+
+								default:
+									break;
+								}
 
 								msg << XorStr("Fired shot at ");
 								msg << FixedStrLength(info.szName).data();
 								msg << XorStr("'s ") << TranslateHitbox(bestPoint->hitboxIndex).c_str() << XorStr("(") << int(bestPoint->pointscale * 100.f) << XorStr("%%%%)") << XorStr(" for ");
-								msg << int(bestPoint->damage) << " damage, ";
+								msg << int(bestPoint->damage) << " damage | ";
 
-								msg << XorStr("flick: ") << int(bestPoint->target->record->m_iResolverMode == 7) << XorStr(" | ");
+								msg << XorStr("res: ") << resolvermode << XorStr(" | ");
 								msg << XorStr("bt: ") << backtrackedticks << XorStr(" | ");
 								msg << XorStr("hc: ") << int(bestPoint->hitchance);
 
 
 								ILoggerEvent::Get()->PushEvent(msg.str(), FloatColor(255, 255, 255), true);
-
 							}
 
 						}
