@@ -22,6 +22,8 @@
 #include "ExtendedEsp.hpp"
 #include <sstream>
 #include <ctime>
+#include <windows.h>
+
 //#include "../Rage/AnimationSystem.hpp"
 
 #include "../Miscellaneous/Movement.hpp"
@@ -67,7 +69,7 @@ private:
 		float m_flLoading = 0.f;
 		FloatColor m_Color = FloatColor(0, 0, 0, 255);
 	};
-
+	
 	std::vector< IndicatorsInfo_t > m_vecTextIndicators;
 
 	struct EspData_t {
@@ -210,20 +212,41 @@ void DrawWatermark() {
 	bool connected = Interfaces::m_pEngine->IsInGame();
 	std::string text;
 
+	SYSTEMTIME lt;
+	GetLocalTime(&lt);
+	
+	// ez convert to 12 hour format
+	if (lt.wHour > 12)
+		lt.wHour -= 12;
+	if (lt.wHour == 0)
+		lt.wHour = 12;
+
+	std::string hour = std::to_string(lt.wHour);
+	std::string wMin = std::to_string(lt.wMinute);
+	std::string wSec = std::to_string(lt.wSecond);
+	
+	// add 0 padding to minutes and seconds
+	size_t n_zeros = 2;
+	auto min = std::string(n_zeros - std::min(n_zeros, wMin.length()), '0') + wMin;
+	auto sec = std::string(n_zeros - std::min(n_zeros, wSec.length()), '0') + wSec;
+
 	if (connected) {
 		auto netchannel = Encrypted_t<INetChannelInfo>(Interfaces::m_pEngine->GetNetChannelInfo());
 		if (!netchannel.IsValid())
 			return;
 		int ms = (std::max(0, (int)std::round(netchannel->GetLatency(FLOW_OUTGOING) * 1000.f)) + std::max(0, (int)std::round(netchannel->GetLatency(FLOW_INCOMING) * 1000.f)));
-
-		text = XorStr("Autism | Build: " __DATE__ " | Ping: ");
-		text += std::to_string(ms);
-		text += XorStr(" ms");
-		text += XorStr(" | ");
+		
+		text = XorStr("Autism | ");
 		text += XorStr(g_Vars.globals.server_adress);
+		text += XorStr(" | ");
+		text += std::to_string(ms);
+		text += XorStr(" ms | ");
+		text += hour; text += XorStr(":"); text += min; text += XorStr(":"); text += sec;
 	}
-	else
-		text = XorStr("Autism | Build: " __DATE__ "");
+	else {
+		text = XorStr("Autism | ");
+		text += hour; text += XorStr(":"); text += min; text += XorStr(":"); text += sec;
+	}
 
 	Render::Engine::FontSize_t size = Render::Engine::watermark.size(text);
 

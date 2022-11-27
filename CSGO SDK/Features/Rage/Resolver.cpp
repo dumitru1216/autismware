@@ -302,16 +302,11 @@ namespace Engine {
 			}
 		}
 
-		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && delta < 1.1f) // expire last move after 1.1 secs.
+		// expire last move after 0.6 secs if not in open. (0.2 sec lby delay + 400ms max backtrack)
+		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && (delta < 0.6f || !ShouldUseFreestand(player, record)))
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
-			record->m_resolver_mode = XorStr("LAST MOVE 1");
-			record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
-		}
-		else if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && delta > 1.1f && !ShouldUseFreestand(player, record)) // if in open.
-		{
-			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
-			record->m_resolver_mode = XorStr("LAST MOVE 2");
+			record->m_resolver_mode = XorStr("LAST MOVE");
 			record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
 		}
 		else
@@ -414,17 +409,9 @@ namespace Engine {
 			return;
 		}
 
-		// anim layer lby break detect thx nugsy.
 		if (anim_data->m_AnimationRecord.size() >= 2)
 		{
-			if (record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget && player->m_flAnimationTime() < Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate)
-			{
-				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
-				record->m_resolver_mode = XorStr("FLICK");
-				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
-				return;
-			}
-			
+			// anim layer lby break detect thx nugsy.
 			if (record->m_serverAnimOverlays[3].m_flCycle < 0.01f && prev->m_serverAnimOverlays[3].m_flCycle > 0.01f)
 			{
 				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
@@ -432,7 +419,7 @@ namespace Engine {
 				Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + Interfaces::m_pGlobalVars->interval_per_tick + TIME_TO_TICKS(player->m_flSimulationTime() - prev->m_serverAnimOverlays[3].m_flCycle);
 				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
 			}
-			else if (player->m_flAnimationTime() >= Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate)
+			else if (player->m_flAnimationTime() >= Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate || (record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget && player->m_flAnimationTime() < Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate))
 			{
 				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
 				record->m_resolver_mode = XorStr("FLICK");
