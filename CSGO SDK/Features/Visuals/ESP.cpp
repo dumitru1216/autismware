@@ -230,6 +230,9 @@ void DrawWatermark() {
 	auto min = std::string(n_zeros - std::min(n_zeros, wMin.length()), '0') + wMin;
 	auto sec = std::string(n_zeros - std::min(n_zeros, wSec.length()), '0') + wSec;
 
+	player_info_t info;
+	Interfaces::m_pEngine->GetPlayerInfo(Interfaces::m_pEngine->GetLocalPlayer(), &info);
+
 	if (connected) {
 		auto netchannel = Encrypted_t<INetChannelInfo>(Interfaces::m_pEngine->GetNetChannelInfo());
 		if (!netchannel.IsValid())
@@ -237,6 +240,8 @@ void DrawWatermark() {
 		int ms = (std::max(0, (int)std::round(netchannel->GetLatency(FLOW_OUTGOING) * 1000.f)) + std::max(0, (int)std::round(netchannel->GetLatency(FLOW_INCOMING) * 1000.f)));
 		
 		text = XorStr("Autism | ");
+		text += info.szName;
+		text += XorStr(" | ");
 		text += XorStr(g_Vars.globals.server_adress);
 		text += XorStr(" | ");
 		text += std::to_string(ms);
