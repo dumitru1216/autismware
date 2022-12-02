@@ -883,11 +883,8 @@ namespace Interfaces
 			return false;
 		}
 
-		if (m_rage_data->m_pLocal->m_flDuckAmount() > 0.f) {
-			if (g_Vars.globals.m_flPreviousDuckAmount > m_rage_data->m_pLocal->m_flDuckAmount()) {
-				return false;
-			}
-		}
+		if (m_rage_data->m_pLocal->m_flDuckAmount() > 0.f && g_Vars.globals.m_flPreviousDuckAmount > m_rage_data->m_pLocal->m_flDuckAmount())
+			return false;
 
 		auto dist = (m_rage_data->m_pLocal->m_vecOrigin().Distance(point->target->player->m_vecOrigin()));
 		auto meters = dist * 0.0254f;

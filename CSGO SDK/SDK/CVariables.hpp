@@ -1253,9 +1253,7 @@ public:
 
 	config_option(bool, slow_walk, false);
 	config_option(int, slow_walk_type, 0);
-	config_option(int, slow_walk_speed, 16);
 	config_keybind(slow_walk_bind);
-	config_option(bool, slow_walk_custom, false);
 
 	config_option(float, viewmodel_fov, 68.f);
 	config_option(bool, viewmodel_change, false);

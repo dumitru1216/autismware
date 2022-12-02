@@ -226,7 +226,6 @@ namespace Menu {
 
 					if (GUI::Controls::Checkbox(("Fake-walk"), &g_Vars.misc.slow_walk)) {
 						GUI::Controls::Hotkey(("Fake-walk key#Key"), &g_Vars.misc.slow_walk_bind);
-						GUI::Controls::Slider(("Fake-walk speed"), &g_Vars.misc.slow_walk_speed, 4, 16);
 					}
 
 

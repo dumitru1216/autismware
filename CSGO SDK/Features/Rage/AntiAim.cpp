@@ -464,7 +464,7 @@ namespace Interfaces
 		static bool bGenerate = true;
 		static float flGenerated = 0.f;
 
-		if (local->m_vecVelocity().Length() > 0.1f && g_Vars.globals.m_bGround) {
+		if (!(g_Vars.misc.slow_walk && g_Vars.misc.slow_walk_bind.enabled) && local->m_vecVelocity().Length() > 0.1f && g_Vars.globals.m_bGround) {
 			flLastMoveTime = Interfaces::m_pGlobalVars->realtime;
 			flLastMoveYaw = local->m_flLowerBodyYawTarget();
 

@@ -278,7 +278,7 @@ namespace Interfaces
 		bool AdjustVelocity();
 		void AutoJump();
 		void AutoStrafe();
-		void SlowWalk(float speed, bool force_accurate = false);
+		void SlowWalk(Encrypted_t<CUserCmd> cmd);
 	};
 
 	Movement* Movement::Get() {
@@ -383,29 +383,12 @@ namespace Interfaces
 			if (Weapon) {
 				auto weaponInfo = Weapon->GetCSWeaponData();
 				if (g_Vars.misc.slow_walk && g_Vars.misc.slow_walk_bind.enabled) {
-
-					if (Weapon) {
-						if (weaponInfo.IsValid()) {
-							float flMaxSpeed = m_movement_data->m_pLocal->m_bIsScoped() > 0 ? weaponInfo.Xor()->m_flMaxSpeed2 : weaponInfo.Xor()->m_flMaxSpeed;
-							float flDesiredSpeed = (flMaxSpeed * 0.33000001);
-							if (g_Vars.misc.slow_walk_custom) {
-								SlowWalk(flDesiredSpeed * (g_Vars.misc.slow_walk_speed / 100.f));
-							}
-							else {
-								SlowWalk(flDesiredSpeed);
-							}
-						}
-					}
+					if (Weapon && weaponInfo.IsValid())
+						SlowWalk(cmd);
 				}
 				else if (g_Vars.misc.accurate_walk && m_movement_data->m_pCmd->buttons & IN_SPEED) {
-					if (Weapon) {
-						if (weaponInfo.IsValid()) {
-							float flMaxSpeed = m_movement_data->m_pLocal->m_bIsScoped() > 0 ? weaponInfo.Xor()->m_flMaxSpeed2 : weaponInfo.Xor()->m_flMaxSpeed;
-							float flDesiredSpeed = (flMaxSpeed * 0.33000001);
-
-							SlowWalk(flDesiredSpeed, true);
-						}
-					}
+					if (Weapon && weaponInfo.IsValid())
+						SlowWalk(cmd);
 				}
 			}
 		}
@@ -879,38 +862,58 @@ namespace Interfaces
 		m_movement_data->m_angMovementAngle.Normalize();
 	}
 
-	void C_Movement::SlowWalk(float speed, bool force_accurate) {
-		C_CSPlayer* LocalPlayer = C_CSPlayer::GetLocalPlayer();
+	void C_Movement::SlowWalk(Encrypted_t<CUserCmd> cmd) 
+	{
+		Vector velocity{ m_movement_data->m_pLocal->m_vecVelocity() };
+		int    ticks{ }, max{ 14 };
 
-		if (!LocalPlayer || LocalPlayer->IsDead())
+		auto pLocal = C_CSPlayer::GetLocalPlayer();
+
+		if (!pLocal || pLocal->IsDead())
 			return;
 
-		if (g_TickbaseController.s_nExtraProcessingTicks) {
-			g_Vars.globals.Fakewalking = false;
+		if (!(g_Vars.misc.slow_walk && g_Vars.misc.slow_walk_bind.enabled))
 			return;
+
+		static auto sv_friction = Interfaces::m_pCvar->FindVar(XorStr("sv_friction"));
+		static auto sv_stopspeed = Interfaces::m_pCvar->FindVar(XorStr("sv_stopspeed"));
+		static int playerSurfaceFrictionOffset = SDK::Memory::FindInDataMap(m_movement_data->m_pLocal->GetPredDescMap(), XorStr("m_surfaceFriction"));
+		float playerSurfaceFriction = *(float*)(uintptr_t(m_movement_data->m_pLocal) + playerSurfaceFrictionOffset);
+
+		// calculate friction.
+		float friction = sv_friction->GetFloat() * playerSurfaceFriction;
+
+		int m_max_lag = (pLocal->m_fFlags() & FL_ONGROUND) ? 14 : 13;
+
+		for (; ticks < m_max_lag; ++ticks) {
+			// calculate speed.
+			float speed = velocity.Length();
+
+			// if too slow return.
+			if (speed <= 0.1f)
+				break;
+
+			// bleed off some speed, but if we have less than the bleed, threshold, bleed the threshold amount.
+			float control = std::max(speed, sv_stopspeed->GetFloat());
+
+			// calculate the drop amount.
+			float drop = control * friction * Interfaces::m_pGlobalVars->interval_per_tick;
+
+			// scale the velocity.
+			float newspeed = std::max(0.f, speed - drop);
+
+			if (newspeed != speed) {
+				// determine proportion of old speed we are using.
+				newspeed /= speed;
+
+				// adjust velocity according to proportion.
+				velocity *= newspeed;
+			}
 		}
 
-		*m_movement_data->m_pSendPacket = Interfaces::m_pClientState->m_nChokedCommands() > g_Vars.misc.slow_walk_speed;
-		if (Interfaces::m_pClientState->m_nChokedCommands() > 16)
-			*m_movement_data->m_pSendPacket = true;
-
-		g_Vars.globals.Fakewalking = true;
-
-		m_movement_data->m_pCmd->buttons &= ~IN_SPEED;
-
-		// compensate for lost speed
-		int nTicksToStop = g_Vars.misc.slow_walk_speed * 25 / 100; // 25% of the choke limit
-
-		// stop when necessary
-		if (Interfaces::m_pClientState->m_nChokedCommands() > (g_Vars.misc.slow_walk_speed - nTicksToStop) || !Interfaces::m_pClientState->m_nChokedCommands() || *m_movement_data->m_pSendPacket) {
-			InstantStop();
-		}
-
-		// fix event delay
-		g_Vars.globals.FakeWalkWillChoke = g_Vars.misc.slow_walk_speed - Interfaces::m_pClientState->m_nChokedCommands();
-
-		if (!g_Vars.globals.Fakewalking) {
-			g_Vars.globals.FakeWalkWillChoke = 0;
+		// zero forwardmove and sidemove.
+		if (ticks > ((max - 1) - Interfaces::m_pClientState->m_nChokedCommands()) || !Interfaces::m_pClientState->m_nChokedCommands()) {
+			cmd->forwardmove = cmd->sidemove = 0.f;
 		}
 	}
 

@@ -456,7 +456,7 @@ void CEsp::Keybinds() {
 
 	if (g_Vars.rage.enabled) {
 		AddBind(XorStr("Damage override"), g_Vars.rage.key_dmg_override);
-		AddBind(XorStr("Force body-aim"), g_Vars.rage.prefer_body);
+		AddBind(XorStr("Force baim"), g_Vars.rage.prefer_body);
 	}
 
 
@@ -469,7 +469,7 @@ void CEsp::Keybinds() {
 	}
 
 	if (g_Vars.misc.slow_walk) {
-		AddBind(XorStr("Slow-motion"), g_Vars.misc.slow_walk_bind);
+		AddBind(XorStr("Fake walk"), g_Vars.misc.slow_walk_bind);
 	}
 
 	float gaySize = this->m_KeyBinds.size.y;
