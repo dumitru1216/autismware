@@ -1539,6 +1539,8 @@ namespace Interfaces
 									resolvermode = XorStr("air"); break;
 								case 7:
 									resolvermode = XorStr("flick"); break;
+								case 8:
+									resolvermode = XorStr("lby"); break;
 
 								default:
 									break;
@@ -1701,7 +1703,7 @@ namespace Interfaces
 
 	int C_Ragebot::GeneratePoints(C_CSPlayer* player, std::vector<C_AimTarget>& aim_targets, std::vector<C_AimPoint>& aim_points) {
 		auto lagData = Engine::LagCompensation::Get()->GetLagData(player->m_entIndex);
-		if (!lagData.IsValid() || lagData->m_History.empty() || !lagData->m_History.front().m_bIsValid)
+		if (!lagData.IsValid() || lagData->m_History.empty())
 			return 0;
 
 		player_info_t info;
@@ -1741,16 +1743,13 @@ namespace Interfaces
 		if (!hitboxSet)
 			return 0;
 
-		//auto anim_data = Engine::AnimationSystem::Get()->GetAnimationData(player->m_entIndex);
-		//auto animrecord = &anim_data->m_AnimationRecord.front();
 		auto& aim_target = aim_targets.emplace_back();
 		aim_target.player = player;
 		aim_target.record = record;
-		//aim_target.animrecord = animrecord;
 		aim_target.backup = backup;
 		aim_target.preferBody = (m_rage_data->rbot->prefer_body);
-		//									last move							 flick	
-		aim_target.preferHead = int(record->m_iResolverMode == 4) || int(record->m_iResolverMode == 7) || record->m_vecVelocity.Length() > 0.1f;
+		//									last move							 flick	                          lby if not breaking                    backtrack lby
+		aim_target.preferHead = int(record->m_iResolverMode == 4) || int(record->m_iResolverMode == 7) || int(record->m_iResolverMode == 8) || record->m_vecVelocity.Length() > 0.1f;
 
 		auto addedPoints = 0;
 		for (int i = 0; i < HITBOX_MAX; i++) {

@@ -87,9 +87,6 @@ namespace Interfaces
 		if (*(bool*)(*(uintptr_t*)g_GameRules + 0x20))
 			return;
 
-		if (g_Vars.globals.Fakewalking)
-			return;
-
 		if (LocalPlayer->m_fFlags() & 0x40)
 			return;
 
@@ -178,9 +175,15 @@ namespace Interfaces
 			return fakelag_amount;
 		};
 
+		
+
 		auto apply_choketype = [&](int fakelag_amount) {
 
 			float extrapolated_speed = LocalPlayer->m_vecVelocity().Length() * Interfaces::m_pGlobalVars->interval_per_tick;
+
+			if (g_Vars.misc.slow_walk && g_Vars.misc.slow_walk_bind.enabled)
+				return 14;
+
 			switch (g_Vars.fakelag.choke_type) {
 			case 0: // max
 				break;
@@ -197,7 +200,7 @@ namespace Interfaces
 				}
 				break;
 			}
-
+			
 			return fakelag_amount;
 		};
 
@@ -560,7 +563,11 @@ namespace Interfaces
 		else if (moving && !g_Vars.fakelag.when_moving)
 			return false;
 
-		fakelagData->m_iMaxChoke = !moving ? 1 : (int)g_Vars.fakelag.choke;
+		if (g_Vars.misc.slow_walk && g_Vars.misc.slow_walk_bind.enabled)
+			fakelagData->m_iMaxChoke = 14;
+		else
+			fakelagData->m_iMaxChoke = !moving ? 1 : (int)g_Vars.fakelag.choke;
+
 		return true;
 	}
 }

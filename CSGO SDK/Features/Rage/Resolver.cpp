@@ -16,8 +16,14 @@ namespace Engine {
 	int last_ticks[65];
 	int CResolver::GetChokedPackets(C_CSPlayer* player)
 	{
+		// make sure they have no fake for at least 2 ticks in a row.
+		float lastsim = player->m_flSimulationTime() - Interfaces::m_pGlobalVars->interval_per_tick;
+		float lastoldsim = player->m_flOldSimulationTime() - Interfaces::m_pGlobalVars->interval_per_tick;
+
+		auto oldticks = TIME_TO_TICKS(lastsim - lastoldsim);
+
 		auto ticks = TIME_TO_TICKS(player->m_flSimulationTime() - player->m_flOldSimulationTime());
-		if (ticks == 0 && last_ticks[player->EntIndex()] > 0) {
+		if (ticks == 0 && oldticks == 0 && last_ticks[player->EntIndex()] > 0) {
 			return last_ticks[player->EntIndex()] - 1;
 		}
 		else {
@@ -276,7 +282,7 @@ namespace Engine {
 
 		// get records.
 		auto anim_data = AnimationSystem::Get()->GetAnimationData(player->m_entIndex);
-		
+
 		// get last move time.
 		float delta = player->m_flAnimationTime() - g_ResolverData[player->EntIndex()].m_sMoveData.m_flAnimTime;
 
@@ -328,7 +334,7 @@ namespace Engine {
 				case 1:
 					record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget - 35.f;
 					break;
-				
+
 				default:
 					break;
 				}
@@ -358,7 +364,7 @@ namespace Engine {
 		}
 	}
 
-	void CResolver::PredictBodyUpdates(C_CSPlayer* player, C_AnimationRecord* record, C_AnimationRecord* prev) 
+	void CResolver::PredictBodyUpdates(C_CSPlayer* player, C_AnimationRecord* record, C_AnimationRecord* prev)
 	{
 		auto local = C_CSPlayer::GetLocalPlayer();
 		if (!local)
@@ -384,46 +390,56 @@ namespace Engine {
 		// get records.
 		auto anim_data = AnimationSystem::Get()->GetAnimationData(player->m_entIndex);
 
+		if (anim_data->m_AnimationRecord.size() < 2)
+			return;
+
 		// alias this shit
 		float nextupdate = Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate;
 		bool predicting = Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates;
+		auto& data = g_ResolverData[player->EntIndex()];
+
+		C_AnimationLayer* current_layer = &player->m_AnimOverlay()[3];
+		C_AnimationLayer* previous_layer = &prev->m_serverAnimOverlays[3];
 
 		// inform esp that we're about to be the prediction process
 		predicting = true;
 
 		// check if the player is walking
-		if (record->m_vecVelocity.Length() > 0.1f && !record->m_bFakeWalking) {
+		if (record->m_vecVelocity.Length() > 0.1f) {
 			// predict the first flick they have to do after they stop moving
 			nextupdate = player->m_flAnimationTime() + 0.22f;
 			predicting = false;
 			return;
 		}
 
-		if (anim_data->m_AnimationRecord.size() >= 2)
+		// we have no reliable move data
+		if (!Engine::g_ResolverData[player->EntIndex()].m_bCollectedValidMoveData && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget)
 		{
-			// we have no reliable move data, let's aim for lby changes
-			if (!(Engine::g_ResolverData[player->EntIndex()].m_bCollectedValidMoveData) && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget)
-			{
-				predicting = false;
-				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
-				record->m_resolver_mode = XorStr("FLICK");
-				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
-			}
-			// anim layer lby break detect thx nugsy.
-			if (record->m_serverAnimOverlays[3].m_flCycle < 0.01f && prev->m_serverAnimOverlays[3].m_flCycle > 0.01f)
-			{
-				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
-				record->m_resolver_mode = XorStr("FLICK");
-				nextupdate = player->m_flAnimationTime() + Interfaces::m_pGlobalVars->interval_per_tick + TIME_TO_TICKS(player->m_flSimulationTime() - prev->m_serverAnimOverlays[3].m_flCycle);
-				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
-			}
-			else if (player->m_flAnimationTime() >= nextupdate && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget || player->m_flAnimationTime() < nextupdate && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget)
-			{
-				record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
-				record->m_resolver_mode = XorStr("FLICK");
-				nextupdate = player->m_flAnimationTime() + 1.1f;
-				record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
-			}
+			record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
+			record->m_resolver_mode = XorStr("FLICK");
+			record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
+			predicting = false;
+			return;
+		}
+		
+		// https://www.unknowncheats.me/forum/counterstrike-global-offensive/251015-detecting-resolving-lby-breakers.html
+		// not breaking lby
+		// todo: draw layer info on esp for debug
+		if (!(current_layer->m_flWeight == 0.f && (previous_layer->m_flBlendIn > 0.95f && current_layer->m_flCycle > 0.95f)) && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
+		{
+			record->m_iResolverMode = EResolverModes::RESOLVE_LBY;
+			record->m_resolver_mode = XorStr("LBY");
+			predicting = false;
+			record->m_angEyeAngles.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
+			return;
+		}
+		else if (player->m_flAnimationTime() >= nextupdate && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget || player->m_flAnimationTime() < nextupdate && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget)
+		{
+			record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
+			record->m_resolver_mode = XorStr("FLICK");
+			nextupdate = player->m_flAnimationTime() + 1.1f;
+			predicting = true;
+			record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
 		}
 	}
 
@@ -477,7 +493,7 @@ namespace Engine {
 			ResolveStand(player, record);
 			return;
 		}
-		
+
 		record->m_iResolverMode = RESOLVE_AIR;
 		record->m_resolver_mode = XorStr("AIR");
 		record->m_angEyeAngles.y = record->m_flLowerBodyYawTarget;

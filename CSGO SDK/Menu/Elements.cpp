@@ -172,7 +172,7 @@ namespace Menu {
 					if (GUI::Controls::Checkbox(("Enabled##aa"), &g_Vars.antiaim.enabled))
 						// yaw / pitch / fake.
 						GUI::Controls::Dropdown(("Pitch"), { ("Off"), ("Down"), ("Up"), ("Zero") }, &settings->pitch);
-					GUI::Controls::Dropdown(("Yaw"), { ("Off"), ("180"), ("180z"), "Jitter" }, &settings->base_yaw);
+					GUI::Controls::Dropdown(("Yaw"), { ("Off"), ("Backwards"), ("180z"), "Jitter" }, &settings->base_yaw);
 
 
 					if (settings->base_yaw > 0)

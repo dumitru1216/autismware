@@ -14,6 +14,7 @@ namespace Engine {
 		RESOLVE_BRUTEFORCE,
 		RESOLVE_AIR,
 		RESOLVE_LBY_UPDATE,
+		RESOLVE_LBY,
 	};
 
 	struct CResolverData {
@@ -59,16 +60,6 @@ namespace Engine {
 		void ResolveYaw(C_CSPlayer* player, C_AnimationRecord* record);
 		void PredictBodyUpdates(C_CSPlayer* player, C_AnimationRecord* record, C_AnimationRecord* prev);
 	public:
-		// check if the players yaw is sideways.
-		bool IsLastMoveValid(C_AnimationRecord* record, float m_yaw) {
-			auto local = C_CSPlayer::GetLocalPlayer();
-			if (!local)
-				return false;
-			Vector angAway;
-			Math::VectorAngles(local->m_vecOrigin() - record->m_vecOrigin, angAway);
-			const float delta = fabs(Math::AngleNormalize(angAway.y - m_yaw));
-			return delta > 20.f && delta < 160.f;
-		}
 
 		// freestanding.
 		class AdaptiveAngle {
@@ -94,7 +85,6 @@ namespace Engine {
 				m_dist -= penalty;
 			}
 		};
-		void FindBestAngle(C_CSPlayer* player);
 	};
 
 	extern CResolver g_Resolver;

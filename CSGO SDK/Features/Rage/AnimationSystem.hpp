@@ -71,6 +71,7 @@ namespace Engine
 		int m_iResolverMode;
 		std::string m_resolver_mode;
 		C_AnimationLayer m_serverAnimOverlays[13];
+		C_CSPlayer* m_pPlayer;
 	};
 
 	class C_AnimationData {
