@@ -425,7 +425,7 @@ namespace Engine {
 		// https://www.unknowncheats.me/forum/counterstrike-global-offensive/251015-detecting-resolving-lby-breakers.html
 		// not breaking lby
 		// todo: draw layer info on esp for debug
-		if (!(current_layer->m_flWeight == 0.f && (previous_layer->m_flBlendIn > 0.95f && current_layer->m_flCycle > 0.95f)) && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
+		if (!(current_layer->m_flWeight == 0.f && (previous_layer->m_flBlendIn == 1.f && current_layer->m_flCycle == 1.f)) && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY;
 			record->m_resolver_mode = XorStr("LBY");

@@ -1465,7 +1465,7 @@ public:
 	ConVar* crosshair;
 
 	ConVar* r_drawmodelstatsoverlay;
-
+	ConVar* sv_clip_penetration_traces_to_players;
 	ConVar* sv_clockcorrection_msecs;
 	ConVar* sv_max_usercmd_future_ticks;
 	ConVar* sv_maxusrcmdprocessticks;
