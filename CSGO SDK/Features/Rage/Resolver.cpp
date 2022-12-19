@@ -393,22 +393,14 @@ namespace Engine {
 		if (anim_data->m_AnimationRecord.size() < 2)
 			return;
 
-		// alias this shit
-		float nextupdate = Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate;
-		bool predicting = Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates;
-		auto& data = g_ResolverData[player->EntIndex()];
-
 		C_AnimationLayer* current_layer = &player->m_AnimOverlay()[3];
 		C_AnimationLayer* previous_layer = &prev->m_serverAnimOverlays[3];
-
-		// inform esp that we're about to be the prediction process
-		predicting = true;
 
 		// check if the player is walking
 		if (record->m_vecVelocity.Length() > 0.1f) {
 			// predict the first flick they have to do after they stop moving
-			nextupdate = player->m_flAnimationTime() + 0.22f;
-			predicting = false;
+			Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 0.22f;
+			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
 			return;
 		}
 
@@ -417,8 +409,8 @@ namespace Engine {
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
 			record->m_resolver_mode = XorStr("FLICK");
-			record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
-			predicting = false;
+			record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
+			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
 			return;
 		}
 		
@@ -429,17 +421,17 @@ namespace Engine {
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY;
 			record->m_resolver_mode = XorStr("LBY");
-			predicting = false;
-			record->m_angEyeAngles.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
+			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
+			record->m_angEyeAngles.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
 			return;
 		}
-		else if (player->m_flAnimationTime() >= nextupdate && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget || player->m_flAnimationTime() < nextupdate && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget)
+		else if (player->m_flAnimationTime() >= Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget || player->m_flAnimationTime() < Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget)
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
 			record->m_resolver_mode = XorStr("FLICK");
-			nextupdate = player->m_flAnimationTime() + 1.1f;
-			predicting = true;
-			record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = record->m_flLowerBodyYawTarget;
+			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = true;
+			Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 1.1f;
+			record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
 		}
 	}
 
@@ -452,7 +444,7 @@ namespace Engine {
 		// apply lby to eyeangles.
 		record->m_iResolverMode = EResolverModes::RESOLVE_WALK;
 		record->m_resolver_mode = XorStr("MOVING");
-		record->m_angEyeAngles.y = record->m_flLowerBodyYawTarget;
+		record->m_angEyeAngles.y = player->m_flLowerBodyYawTarget();
 		Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
 		Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 0.22f;
 
@@ -496,7 +488,7 @@ namespace Engine {
 
 		record->m_iResolverMode = RESOLVE_AIR;
 		record->m_resolver_mode = XorStr("AIR");
-		record->m_angEyeAngles.y = record->m_flLowerBodyYawTarget;
+		record->m_angEyeAngles.y = player->m_flLowerBodyYawTarget();
 	}
 
 	void CResolver::ResolveManual(C_CSPlayer* player, C_AnimationRecord* record, bool bDisallow)
