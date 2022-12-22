@@ -219,7 +219,7 @@ void Autowall::ClipTraceToPlayers(const Vector& vecAbsStart, const Vector& vecAb
 
 	for (int i = 0; i <= Interfaces::m_pGlobalVars->maxClients; ++i) {
 		C_CSPlayer* pPlayer = C_CSPlayer::GetPlayerByIndex(i);
-		
+
 		if (!pPlayer || pPlayer->IsDormant() || pPlayer->IsDead())
 			continue;
 
@@ -305,32 +305,31 @@ bool Autowall::TraceToExit(CGameTrace* pEnterTrace, Vector vecStartPos, Vector v
 				continue;
 			}
 
+			//Can we hit? Is the wall solid?
+			if (pExitTrace->DidHit() && !pExitTrace->startsolid) {
+				if (IsBreakable((C_BaseEntity*)pEnterTrace->hit_entity) && IsBreakable((C_BaseEntity*)pExitTrace->hit_entity))
+					return true;
+
+				if (pEnterTrace->surface.flags & SURF_NODRAW ||
+					(!(pExitTrace->surface.flags & SURF_NODRAW) && pExitTrace->plane.normal.Dot(vecDirection) <= 1.f)) {
+					const float flMultAmount = pExitTrace->fraction * 4.f;
+
+					// get the real end pos
+					vecStart -= vecDirection * flMultAmount;
+					return true;
+				}
+
+				continue;
+			}
+
 			if (!pExitTrace->DidHit() || pExitTrace->startsolid) {
-				if (IsBreakable((C_BaseEntity*)pEnterTrace->hit_entity)) {
+				if (pEnterTrace->DidHitNonWorldEntity() && IsBreakable((C_BaseEntity*)pEnterTrace->hit_entity)) {
 					// if we hit a breakable, make the assumption that we broke it if we can't find an exit (hopefully..)
 					// fake the end pos
-					*pExitTrace = *pEnterTrace;
+					pExitTrace = pEnterTrace;
 					pExitTrace->endpos = vecStartPos + vecDirection;
 					return true;
 				}
-			}
-
-			if ((pExitTrace->surface.flags & SURF_NODRAW)) {
-
-				if (IsBreakable((C_BaseEntity*)pExitTrace->hit_entity) && IsBreakable((C_BaseEntity*)pEnterTrace->hit_entity)) {
-					vecEnd = pExitTrace->endpos;
-					return true;
-				}
-
-				if (!(pEnterTrace->surface.flags & SURF_NODRAW))
-					continue;
-			}
-
-			const float flMultAmount = pExitTrace->fraction * 4.f;
-
-			if (pExitTrace->plane.normal.Dot(vecDirection) <= 1.f) {
-				vecStart -= vecDirection * flMultAmount;
-				return true;
 			}
 		}
 		// max pen distance is 90 units.
@@ -485,17 +484,16 @@ float Autowall::FireBullets(Encrypted_t<C_FireBulletData> data) {
 			// clip trace to one player
 			ClipTraceToPlayer(data->m_vecStart, vecEndExtended, MASK_SHOT, &data->m_EnterTrace, data->m_TargetPlayer, data);
 		}
-		else {
+		else
 			ClipTraceToPlayers(data->m_vecStart, vecEndExtended, MASK_SHOT, (ITraceFilter*)&filter, &data->m_EnterTrace);
-		}
 
 		if (data->m_EnterTrace.fraction == 1.f)
 			return false;  // we didn't hit anything, stop tracing shoot
 
-		//calculate the damage based on the distance the bullet traveled.
+		// calculate the damage based on the distance the bullet traveled.
 		data->m_flTraceLength += data->m_EnterTrace.fraction * data->m_flMaxLength;
 
-		//Let's make our damage drops off the further away the bullet is.
+		// let's make our damage drops off the further away the bullet is.
 		if (!data->m_bShouldIgnoreDistance)
 			data->m_flCurrentDamage *= pow(data->m_WeaponData->m_flRangeModifier, data->m_flTraceLength / 500.f);
 
@@ -532,7 +530,7 @@ float Autowall::FireBullets(Encrypted_t<C_FireBulletData> data) {
 
 		// check if we reach penetration distance, no more penetrations after that
 		// or if our modifier is super low, just stop the bullet
-		if ((data->m_flTraceLength > 3000.f && data->m_WeaponData->m_flPenetration < 0.1f) ||
+		if (data->m_WeaponData->m_flPenetration < 0.1f ||
 			data->m_EnterSurfaceData->game.flPenetrationModifier < 0.1f)
 			return -1;
 

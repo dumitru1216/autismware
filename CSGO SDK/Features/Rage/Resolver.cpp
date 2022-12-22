@@ -122,13 +122,13 @@ namespace Engine {
 
 		// pick side
 		if (left_two > right_two) {
-			bFacingleft = true;
-			bFacingright = false;
+			this->bFacingleft = true;
+			this->bFacingright = false;
 			return true;
 		}
 		else if (right_two > left_two) {
-			bFacingright = true;
-			bFacingleft = false;
+			this->bFacingright = true;
+			this->bFacingleft = false;
 			return true;
 		}
 		else
@@ -258,9 +258,9 @@ namespace Engine {
 		// set angles.
 		if (lag_data->m_iMissedShotsFreestand < 1)
 			record->m_angEyeAngles.y = best->m_yaw;
-		else if (bFacingright && lag_data->m_iMissedShotsFreestand < 2)
+		else if (this->bFacingright && lag_data->m_iMissedShotsFreestand < 2)
 			record->m_angEyeAngles.y = best->m_yaw + 90.f;
-		else if (bFacingleft && lag_data->m_iMissedShotsFreestand < 2)
+		else if (this->bFacingleft && lag_data->m_iMissedShotsFreestand < 2)
 			record->m_angEyeAngles.y = best->m_yaw - 90.f;
 		else if (lag_data->m_iMissedShotsFreestand == 2 || lag_data->m_iMissedShotsFreestand == 4)
 			record->m_angEyeAngles.y = best->m_yaw + 180.f;
@@ -307,8 +307,8 @@ namespace Engine {
 			}
 		}
 
-		// expire last move after 0.4 secs if not in open. (0.2 sec lby delay + 200ms backtrack)
-		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && (delta < 0.4f || !ShouldUseFreestand(player, record)))
+		// expire last move after 0.22 secs if not in open. (lby delay)
+		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && (delta < 0.22f || !ShouldUseFreestand(player, record)))
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
 			record->m_resolver_mode = XorStr("LAST MOVE");
@@ -321,28 +321,10 @@ namespace Engine {
 				Freestand(player, record);
 				return;
 			}
-			else if (data.m_bCollectedValidMoveData) // brute based off last move.
-			{
-				record->m_iResolverMode = EResolverModes::RESOLVE_BRUTEFORCE;
-				record->m_resolver_mode = XorStr("BRUTE 1");
-				switch (pLagData->m_iMissedShotsBrute % 2) {
-
-				case 0:
-					record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget + 35.f;
-					break;
-
-				case 1:
-					record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget - 35.f;
-					break;
-
-				default:
-					break;
-				}
-			}
 			else
 			{
 				record->m_iResolverMode = EResolverModes::RESOLVE_BRUTEFORCE;
-				record->m_resolver_mode = XorStr("BRUTE 2");
+				record->m_resolver_mode = XorStr("BRUTE");
 				switch (pLagData->m_iMissedShotsBrute % 3) {
 
 				case 0:
@@ -350,11 +332,11 @@ namespace Engine {
 					break;
 
 				case 1:
-					record->m_angEyeAngles.y = angAway.y + 145.f;
+					record->m_angEyeAngles.y = angAway.y - 135.f;
 					break;
 
 				case 2:
-					record->m_angEyeAngles.y = angAway.y - 145.f;
+					record->m_angEyeAngles.y = angAway.y + 135.f;
 					break;
 
 				default:
@@ -413,11 +395,14 @@ namespace Engine {
 			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
 			return;
 		}
-		
-		// https://www.unknowncheats.me/forum/counterstrike-global-offensive/251015-detecting-resolving-lby-breakers.html
-		// not breaking lby
+
 		// todo: draw layer info on esp for debug
-		if (!(current_layer->m_flWeight == 0.f && (previous_layer->m_flBlendIn == 1.f && current_layer->m_flCycle == 1.f)) && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
+		// https://www.unknowncheats.me/forum/counterstrike-global-offensive/251015-detecting-resolving-lby-breakers.html
+
+		bool lowdelta = std::abs(player->m_flLowerBodyYawTarget() - prev->m_flLowerBodyYawTarget) < 35.f;
+
+		// not breaking lby
+		if (lowdelta && !(current_layer->m_flWeight == 0.f && (previous_layer->m_flBlendIn == 1.f && current_layer->m_flCycle == 1.f)) && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY;
 			record->m_resolver_mode = XorStr("LBY");
@@ -425,7 +410,7 @@ namespace Engine {
 			record->m_angEyeAngles.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
 			return;
 		}
-		else if (player->m_flAnimationTime() >= Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget || player->m_flAnimationTime() < Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget)
+		else if (record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget) // literally never misses :O
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
 			record->m_resolver_mode = XorStr("FLICK");

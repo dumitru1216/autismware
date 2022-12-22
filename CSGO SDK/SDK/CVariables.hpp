@@ -659,6 +659,7 @@ public:
 	// temporary here
 	config_option(bool, hide_shots, false);
 
+	config_keybind(hitbox_override_bind);
 	config_keybind(key_dmg_override);
 	config_keybind(key_dt);
 	config_keybind(override_key);
@@ -709,10 +710,10 @@ public:
 	config_option(bool, always_stop, false);
 	config_option(bool, early_stop, false);
 
-	config_option(bool, ignorelimbs_ifwalking, false);
 	config_option(bool, body_aim_if_lethal, false);
 	config_option(bool, between_shots, false);
 
+	config_option(bool, hitbox_override, false);
 	config_option(bool, min_damage_override, false);
 	config_option(int, min_damage_override_amount, 0);
 
@@ -727,6 +728,15 @@ public:
 	config_option(bool, hitboxes_arms, false);
 	config_option(bool, hitboxes_legs, false);
 	config_option(bool, hitboxes_feets, false);
+
+	config_option(bool, hitboxes_ovr_head, false);
+	config_option(bool, hitboxes_ovr_neck, false);
+	config_option(bool, hitboxes_ovr_chest, false);
+	config_option(bool, hitboxes_ovr_stomach, false);
+	config_option(bool, hitboxes_ovr_pelvis, false);
+	config_option(bool, hitboxes_ovr_arms, false);
+	config_option(bool, hitboxes_ovr_legs, false);
+	config_option(bool, hitboxes_ovr_feets, false);
 
 	config_option(float, point_scale, 40.f);
 	config_option(float, body_point_scale, 60.f);

@@ -191,9 +191,15 @@ namespace Interfaces
 			return;
 		}
 
+		auto netchannel = Encrypted_t<INetChannelInfo>(Interfaces::m_pEngine->GetNetChannelInfo());
+
 		static int iPrevFrame = 0;
 		static bool bReset = false;
-		int iCurFrame = ((int)((Interfaces::m_pPrediction->GetUnpredictedGlobals()->curtime)) % 14) * 2;
+
+		// fix high ping tag delay.
+		float delay = netchannel->GetLatency(FLOW_INCOMING);
+
+		int iCurFrame = (((int)(Interfaces::m_pPrediction->GetUnpredictedGlobals()->curtime + TIME_TO_TICKS(delay)) % 14)) * 2;
 
 		if (iPrevFrame != iCurFrame) {
 			switch (iCurFrame % 14) {

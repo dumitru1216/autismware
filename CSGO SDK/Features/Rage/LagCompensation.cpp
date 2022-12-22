@@ -172,7 +172,7 @@ namespace Engine
 		bool isDormant = player->IsDormant();
 
 		// no need to store insane amount of data
-		while (pThis->m_History.size() > 256) {
+		while (pThis->m_History.size() > 255) {
 			pThis->m_History.pop_back();
 		}
 
@@ -185,9 +185,6 @@ namespace Engine
 			return;
 		}
 
-		if (pThis->m_History.size() > 1 && pThis->m_History.front().m_bTeleportDistance && !(pThis->m_History.front().player->m_fFlags() & FL_ONGROUND)) {
-			pThis->m_History.clear();
-		}
 
 		if (info.userId != pThis->m_iUserID) {
 			pThis->Clear();

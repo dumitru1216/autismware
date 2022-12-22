@@ -168,7 +168,6 @@ namespace Interfaces
 		int hitgroup = 0;
 
 		bool center = false;
-		bool penetrated = false;
 		bool isLethal = false;
 		bool isHead = false;
 		bool isBody = false;
@@ -291,58 +290,118 @@ namespace Interfaces
 			if (!hitboxSet)
 				return false;
 
-			if (hitboxSet->pHitbox(HITBOX_PELVIS) == hitbox) {
-				ps = m_rage_data->rbot->body_point_scale;
-				return m_rage_data->rbot->hitboxes_pelvis;
-			}
-
-			if (hitboxSet->pHitbox(HITBOX_RIGHT_FOOT) == hitbox || hitboxSet->pHitbox(HITBOX_LEFT_FOOT) == hitbox) {
-				ps = m_rage_data->rbot->point_scale;
-				return m_rage_data->rbot->hitboxes_feets;
-			}
-
-			switch (hitbox->group) {
-			case Hitgroup_Head:
-
-				if (override_hitscan)
-					return false;
-
-				ps = m_rage_data->rbot->point_scale;
-
-				return (m_rage_data->rbot->hitboxes_head);
-				break;
-			case Hitgroup_Neck: // just neck
-
-				if (override_hitscan)
-					return false;
-
-				ps = m_rage_data->rbot->point_scale;
-				return  (m_rage_data->rbot->hitboxes_neck);
-				break;
-			case Hitgroup_Chest:
-
-				ps = m_rage_data->rbot->point_scale;
-				return m_rage_data->rbot->hitboxes_chest;
-				break;
-			case Hitgroup_Stomach:
-				ps = m_rage_data->rbot->body_point_scale;
-				return m_rage_data->rbot->hitboxes_stomach;
-				break;
-			case Hitgroup_RightLeg:
-			case Hitgroup_LeftLeg:
-				if (hitboxSet->pHitbox(HITBOX_RIGHT_FOOT) != hitbox && hitboxSet->pHitbox(HITBOX_LEFT_FOOT) != hitbox) {
-					ps = m_rage_data->rbot->point_scale;
-					return m_rage_data->rbot->hitboxes_legs;
+			// sloppy as shit, i know
+			if (g_Vars.rage.hitbox_override_bind.enabled)
+			{
+				if (hitboxSet->pHitbox(HITBOX_PELVIS) == hitbox) {
+					ps = m_rage_data->rbot->body_point_scale;
+					return m_rage_data->rbot->hitboxes_ovr_pelvis;
 				}
-				break;
-			case Hitgroup_RightArm:
-			case Hitgroup_LeftArm:
-				ps = m_rage_data->rbot->point_scale;
-				return m_rage_data->rbot->hitboxes_arms;
-				break;
-			default:
-				return false;
-				break;
+
+				if (hitboxSet->pHitbox(HITBOX_RIGHT_FOOT) == hitbox || hitboxSet->pHitbox(HITBOX_LEFT_FOOT) == hitbox) {
+					ps = m_rage_data->rbot->point_scale;
+					return m_rage_data->rbot->hitboxes_ovr_feets;
+				}
+
+				switch (hitbox->group) {
+				case Hitgroup_Head:
+
+					if (override_hitscan)
+						return false;
+
+					ps = m_rage_data->rbot->point_scale;
+
+					return (m_rage_data->rbot->hitboxes_ovr_head);
+					break;
+				case Hitgroup_Neck: // just neck
+
+					if (override_hitscan)
+						return false;
+
+					ps = m_rage_data->rbot->point_scale;
+					return  (m_rage_data->rbot->hitboxes_ovr_neck);
+					break;
+				case Hitgroup_Chest:
+
+					ps = m_rage_data->rbot->point_scale;
+					return m_rage_data->rbot->hitboxes_ovr_chest;
+					break;
+				case Hitgroup_Stomach:
+					ps = m_rage_data->rbot->body_point_scale;
+					return m_rage_data->rbot->hitboxes_ovr_stomach;
+					break;
+				case Hitgroup_RightLeg:
+				case Hitgroup_LeftLeg:
+					if (hitboxSet->pHitbox(HITBOX_RIGHT_FOOT) != hitbox && hitboxSet->pHitbox(HITBOX_LEFT_FOOT) != hitbox) {
+						ps = m_rage_data->rbot->point_scale;
+						return m_rage_data->rbot->hitboxes_ovr_legs;
+					}
+					break;
+				case Hitgroup_RightArm:
+				case Hitgroup_LeftArm:
+					ps = m_rage_data->rbot->point_scale;
+					return m_rage_data->rbot->hitboxes_ovr_arms;
+					break;
+				default:
+					return false;
+					break;
+				}
+			}
+			else
+			{
+				if (hitboxSet->pHitbox(HITBOX_PELVIS) == hitbox) {
+					ps = m_rage_data->rbot->body_point_scale;
+					return m_rage_data->rbot->hitboxes_pelvis;
+				}
+
+				if (hitboxSet->pHitbox(HITBOX_RIGHT_FOOT) == hitbox || hitboxSet->pHitbox(HITBOX_LEFT_FOOT) == hitbox) {
+					ps = m_rage_data->rbot->point_scale;
+					return m_rage_data->rbot->hitboxes_feets;
+				}
+
+				switch (hitbox->group) {
+				case Hitgroup_Head:
+
+					if (override_hitscan)
+						return false;
+
+					ps = m_rage_data->rbot->point_scale;
+
+					return (m_rage_data->rbot->hitboxes_head);
+					break;
+				case Hitgroup_Neck: // just neck
+
+					if (override_hitscan)
+						return false;
+
+					ps = m_rage_data->rbot->point_scale;
+					return  (m_rage_data->rbot->hitboxes_neck);
+					break;
+				case Hitgroup_Chest:
+
+					ps = m_rage_data->rbot->point_scale;
+					return m_rage_data->rbot->hitboxes_chest;
+					break;
+				case Hitgroup_Stomach:
+					ps = m_rage_data->rbot->body_point_scale;
+					return m_rage_data->rbot->hitboxes_stomach;
+					break;
+				case Hitgroup_RightLeg:
+				case Hitgroup_LeftLeg:
+					if (hitboxSet->pHitbox(HITBOX_RIGHT_FOOT) != hitbox && hitboxSet->pHitbox(HITBOX_LEFT_FOOT) != hitbox) {
+						ps = m_rage_data->rbot->point_scale;
+						return m_rage_data->rbot->hitboxes_legs;
+					}
+					break;
+				case Hitgroup_RightArm:
+				case Hitgroup_LeftArm:
+					ps = m_rage_data->rbot->point_scale;
+					return m_rage_data->rbot->hitboxes_arms;
+					break;
+				default:
+					return false;
+					break;
+				}
 			}
 		};
 
@@ -791,7 +850,7 @@ namespace Interfaces
 		if (!pMatrix)
 			return false;
 
-		const auto maxTraces = 128;
+		const auto maxTraces = 255;
 		auto hits = 0;
 		CGameTrace tr;
 		for (int i = 0; i < maxTraces; ++i) {
@@ -1033,16 +1092,6 @@ namespace Interfaces
 					);
 
 					//Interfaces::m_pDebugOverlay->AddTextOverlay( Vector( hitbox->bbmax.x + ( rotation * r ), hitbox->bbmax.y + ( -rotation * r ), hitbox->bbmax.z ).Transform( boneMatrix[ hitbox->bone ] ), Interfaces::m_pGlobalVars->interval_per_tick * 2, "front" );
-
-					// ok, this looks ghetto as shit but we have to clamp these to not have these be off too much
-					pointScale = std::clamp<float>(pointScale, 0.1f, 0.95f);
-					r = hitbox->m_flRadius * pointScale;
-
-					Vector back{ center.x, hitbox->bbmax.y - r, center.z };
-					AddPoint(player, record, side, points,
-						back.Transform(boneMatrix[hitbox->bone]),
-						hitbox, hitboxSet, true
-					);
 				}
 			}
 
@@ -1642,9 +1691,6 @@ namespace Interfaces
 		fireData.m_Weapon = this->m_rage_data->m_pWeapon;
 
 		pPoint->damage = Autowall::FireBullets(&fireData);
-		pPoint->penetrated = pPoint->damage > 1.0f;
-
-
 
 		int hp = std::clamp(pPoint->target->player->m_iHealth(), 0, 100);
 
@@ -1655,6 +1701,9 @@ namespace Interfaces
 		if (m_rage_data->rbot->min_damage_override && g_Vars.rage.key_dmg_override.enabled) {
 			mindmg = m_rage_data->rbot->min_damage_override_amount > 100 ? hp + (m_rage_data->rbot->min_damage_override_amount - 100) : m_rage_data->rbot->min_damage_override_amount;
 		}
+
+		if (hp < mindmg)
+			mindmg = hp;
 
 		if (mindmg < 100 && !lethalx2 && !lethal)
 			mindmg = std::ceil((mindmg / 100.f) * hp);
@@ -1748,7 +1797,7 @@ namespace Interfaces
 		aim_target.record = record;
 		aim_target.backup = backup;
 		aim_target.preferBody = (m_rage_data->rbot->prefer_body);
-		//									last move							 flick	                          lby if not breaking                    backtrack lby
+		/*									last move							 flick	                          lby if not breaking */
 		aim_target.preferHead = int(record->m_iResolverMode == 4) || int(record->m_iResolverMode == 7) || int(record->m_iResolverMode == 8) || record->m_vecVelocity.Length() > 0.1f;
 
 		auto addedPoints = 0;
@@ -1764,7 +1813,7 @@ namespace Interfaces
 			bool limb = i >= 12 && i <= 19;
 
 			// skip loop if running or neck
-			if (neck || (limb && m_rage_data->rbot->ignorelimbs_ifwalking && record->m_vecVelocity.Length() > 0.1f))
+			if (neck)
 				continue;
 
 
@@ -1807,7 +1856,7 @@ namespace Interfaces
 			return nullptr;
 
 		auto& record = lagData->m_History.front();
-		if (!record.m_bIsValid || record.m_bTeleportDistance) {
+		if (!record.m_bIsValid) {
 			return nullptr;
 		}
 
@@ -1825,9 +1874,6 @@ namespace Interfaces
 
 			arrRecords[recordsCount] = &*it;
 			recordsCount++;
-
-			if (it->m_bTeleportDistance)
-				continue;
 
 
 			if (recordsCount + 1 >= 64)

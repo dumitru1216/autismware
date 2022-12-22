@@ -90,8 +90,6 @@ namespace Menu {
 						};
 						GUI::Controls::MultiDropdown(XorStr("Hitboxes") + std::string(XorStr("#") + std::to_string(rage_current_group)), hitboxes);
 
-						GUI::Controls::Checkbox(XorStr("Ignore limbs when moving") + std::string(XorStr("#") + std::to_string(rage_current_group)), &rbot->ignorelimbs_ifwalking);
-
 						std::vector<MultiItem_t> mp_safety_hitboxes = {
 							{ XorStr("Head"), &rbot->mp_hitboxes_head },
 							{ XorStr("Chest"), &rbot->mp_hitboxes_chest },
@@ -118,7 +116,19 @@ namespace Menu {
 
 						GUI::Controls::Slider(XorStr("Minimum damage") + std::string(XorStr("#") + std::to_string(rage_current_group)), &rbot->min_damage_visible, 1.f, 130.f, rbot->min_damage_visible > 100 ? (std::string(XorStr("HP+")).append(std::string(std::to_string(rbot->min_damage_visible - 100)))) : XorStr("%dhp"));
 
-						GUI::Controls::Checkbox(XorStr("Automatic scope") + std::string(XorStr("#") + std::to_string(rage_current_group)), &rbot->autoscope);
+						std::vector<MultiItem_t> ovrhitboxes = {
+						{ XorStr("Head"), &rbot->hitboxes_ovr_head },
+						{ XorStr("Chest"), &rbot->hitboxes_ovr_chest },
+						{ XorStr("Stomach"), &rbot->hitboxes_ovr_stomach },
+						{ XorStr("Pelvis"), &rbot->hitboxes_ovr_pelvis },
+						{ XorStr("Arms"), &rbot->hitboxes_ovr_arms },
+						{ XorStr("Legs"), &rbot->hitboxes_ovr_legs },
+						{ XorStr("Feet"), &rbot->hitboxes_ovr_feets },
+						};
+
+						GUI::Controls::MultiDropdown(XorStr("Hitbox override") + std::string(XorStr("#") + std::to_string(rage_current_group)), ovrhitboxes);
+						GUI::Controls::Hotkey(XorStr("Hitbox override#key") + std::string(XorStr("#") + std::to_string(rage_current_group)), &g_Vars.rage.hitbox_override_bind);
+
 
 						if (GUI::Controls::Checkbox(XorStr("Minimum damage override") + std::string(XorStr("#") + std::to_string(rage_current_group)), &rbot->min_damage_override) || GUI::ctx->setup) {
 							GUI::Controls::Hotkey(XorStr("Minimum dmg override key#key") + std::string(XorStr("#") + std::to_string(rage_current_group)), &g_Vars.rage.key_dmg_override);
@@ -142,6 +152,8 @@ namespace Menu {
 
 
 					GUI::Controls::Checkbox(XorStr("Auto stop"), &rbot->autostop_check);
+
+					GUI::Controls::Checkbox(XorStr("Automatic scope") + std::string(XorStr("#") + std::to_string(rage_current_group)), &rbot->autoscope);
 
 					GUI::Controls::Checkbox(XorStr("Prefer baim") + std::string(XorStr("#") + std::to_string(rage_current_group)), &rbot->prefer_body);
 

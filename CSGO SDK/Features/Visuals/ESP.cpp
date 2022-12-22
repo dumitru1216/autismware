@@ -457,8 +457,8 @@ void CEsp::Keybinds() {
 	if (g_Vars.rage.enabled) {
 		AddBind(XorStr("Damage override"), g_Vars.rage.key_dmg_override);
 		AddBind(XorStr("Force baim"), g_Vars.rage.prefer_body);
+		AddBind(XorStr("Hitbox override"), g_Vars.rage.hitbox_override_bind);
 	}
-
 
 	if (g_Vars.misc.edgejump) {
 		AddBind(XorStr("Edge jump"), g_Vars.misc.edgejump_bind);
@@ -530,8 +530,8 @@ void CEsp::Keybinds() {
 	}
 
 	// title
-	auto size = Render::Engine::esp.size(XorStr("keybinds"));
-	Render::Engine::esp.string(pos.x + (this->m_KeyBinds.size.x * 0.5) - 2, pos.y + (size.m_height * 0.5) - 4, Color::White().OverrideAlpha(255 * alpha), XorStr("keybinds"), Render::Engine::ALIGN_CENTER);
+	auto size = Render::Engine::esp.size(XorStr("Keybinds"));
+	Render::Engine::esp.string(pos.x + (this->m_KeyBinds.size.x * 0.5) - 2, pos.y + (size.m_height * 0.5) - 4, Color::White().OverrideAlpha(255 * alpha), XorStr("Keybinds"), Render::Engine::ALIGN_CENTER);
 }
 
 // lol

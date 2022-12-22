@@ -550,7 +550,7 @@ namespace Interfaces
 		if ((!m_between_shots && !pLocal->CanShoot()) || (not_auto && !pLocal->CanShoot()))
 			return false;
 
-		if (!(pLocal->m_fFlags() & FL_ONGROUND))
+		if (!(pLocal->m_fFlags() & FL_ONGROUND) || (pLocal->m_fFlags() & IN_JUMP))
 			return false;
 
 		if ((pLocal->m_fFlags() & FL_ONGROUND))
@@ -744,13 +744,13 @@ namespace Interfaces
 	}
 
 	void C_Movement::AutoStrafe() {
-		if ((g_Vars.misc.instant_stop && g_Vars.misc.instant_stop_key.enabled))
-			return;
-
 		if ((m_movement_data->m_pLocal->m_fFlags() & FL_ONGROUND) && !(m_movement_data->m_pCmd->buttons & IN_JUMP))
 			return;
 
 		if (m_movement_data->m_pLocal->m_MoveType() != MOVETYPE_WALK)
+			return;
+
+		if (g_Vars.misc.slow_walk && g_Vars.misc.slow_walk_bind.enabled)
 			return;
 
 		static auto side = 1.0f;

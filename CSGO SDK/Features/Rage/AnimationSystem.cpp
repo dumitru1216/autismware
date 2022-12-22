@@ -531,6 +531,10 @@ namespace Engine
 				return false;
 			};
 
+			// show teammate lby
+			if (player->IsTeammate(player) && !IsPlayerBot())
+				player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
+
 			// attempt to resolve the player	
 			if (!player->IsTeammate(C_CSPlayer::GetLocalPlayer()) && !IsPlayerBot()) {
 
@@ -546,18 +550,16 @@ namespace Engine
 				{
 
 					bool running = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_WALK && current.Xor()->m_vecVelocity.Length() > 70.f;
-					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE ||
+					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE || current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY ||
 						running;
 				}
 				else
-				{
-					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE || current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_WALK;
-				}
+					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE || current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY;
 
 				bool bResolved = current.Xor()->m_bResolved;
 				if (g_Vars.rage.override_resolver_flicks) {
 					if (current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE)
-						bResolved = false;
+						bResolved = true;
 				}
 
 				// if the enemy is resolved, why bother overriding?
