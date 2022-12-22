@@ -1576,10 +1576,8 @@ namespace Interfaces
 									resolvermode = XorStr("no fake"); break;
 								case 1:
 									resolvermode = XorStr("moving"); break;
-								case 2: 
-									resolvermode = XorStr("freestand"); break;
 								case 3:
-									resolvermode = XorStr("last move"); break;
+									resolvermode = XorStr("freestand"); break;
 								case 4:
 									resolvermode = XorStr("last move"); break;
 								case 5:

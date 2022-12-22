@@ -307,8 +307,8 @@ namespace Engine {
 			}
 		}
 
-		// expire last move after 0.22 secs if not in open. (lby delay)
-		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && (delta < 0.22f || !ShouldUseFreestand(player, record)))
+		// expire last move after 0.75 secs if not in open.
+		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && (delta < 0.75f || !ShouldUseFreestand(player, record)))
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
 			record->m_resolver_mode = XorStr("LAST MOVE");
@@ -429,7 +429,7 @@ namespace Engine {
 		// apply lby to eyeangles.
 		record->m_iResolverMode = EResolverModes::RESOLVE_WALK;
 		record->m_resolver_mode = XorStr("MOVING");
-		record->m_angEyeAngles.y = player->m_flLowerBodyYawTarget();
+		record->m_angEyeAngles.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
 		Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
 		Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 0.22f;
 
@@ -461,6 +461,13 @@ namespace Engine {
 		if (!local)
 			return;
 
+		auto& data = g_ResolverData[player->EntIndex()];
+
+		Encrypted_t<Engine::C_EntityLagData> pLagData = Engine::LagCompensation::Get()->GetLagData(player->EntIndex());
+		if (!pLagData.IsValid()) {
+			return;
+		}
+
 		// they have barely any speed. 
 		if (record->m_vecAnimationVelocity.Length2D() < 45.f)
 		{
@@ -473,7 +480,11 @@ namespace Engine {
 
 		record->m_iResolverMode = RESOLVE_AIR;
 		record->m_resolver_mode = XorStr("AIR");
-		record->m_angEyeAngles.y = player->m_flLowerBodyYawTarget();
+
+		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsAir < 1)
+			record->m_angEyeAngles.y = player->m_angEyeAngles().y = data.m_sMoveData.m_flLowerBodyYawTarget;
+		else
+			record->m_angEyeAngles.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
 	}
 
 	void CResolver::ResolveManual(C_CSPlayer* player, C_AnimationRecord* record, bool bDisallow)

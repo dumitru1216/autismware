@@ -546,12 +546,10 @@ namespace Engine
 				bool bValid = previous.Xor();
 
 				// we're sure that we resolved the player.
-				if (bValid)
-				{
-
+				if (bValid) {
 					bool running = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_WALK && current.Xor()->m_vecVelocity.Length() > 70.f;
-					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE || current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY ||
-						running;
+					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE || current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LAST_LBY || 
+						current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY || running;
 				}
 				else
 					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE || current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY;
