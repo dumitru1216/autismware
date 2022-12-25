@@ -45,7 +45,6 @@ public:
 	std::vector<TickbaseShift_t> g_iTickbaseShifts;
 
 	bool IsTickcountValid(int nTick);
-
 	void OnRunSimulation(void* this_, int iCommandNumber, CUserCmd* pCmd, size_t local);
 	void OnPredictionUpdate(void* prediction, void*, int startframe, bool validframe, int incoming_acknowledged, int outgoing_command);
 };

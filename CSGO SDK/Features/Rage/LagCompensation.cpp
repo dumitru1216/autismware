@@ -137,24 +137,35 @@ namespace Engine
 		correct += in;
 
 		// check bounds [ 0, sv_maxunlag ]
-		std::clamp(correct, 0.f, 1.f);
+		std::clamp(correct, 0.f, g_Vars.sv_maxunlag->GetFloat());
 
 		// calculate difference between tick sent by player and our latency based tick.
 		// ensure this record isn't too old.
 		return std::abs(correct - (curtime - record.m_flSimulationTime)) < 0.19f;
 	}
 
-
-	float GetClientInterpAmount() {
-		return std::max(g_Vars.cl_interp->GetFloat(), g_Vars.cl_interp_ratio->GetFloat() / g_Vars.cl_updaterate->GetFloat());
-	}
-
 	void C_LagCompensation::SetupLerpTime() {
 
+		float updaterate = std::clamp(g_Vars.cl_updaterate->GetFloat(), g_Vars.sv_minupdaterate->GetFloat(), g_Vars.sv_maxupdaterate->GetFloat());
+		float min_interp = g_Vars.sv_client_min_interp_ratio->GetFloat();
+		float max_interp = g_Vars.sv_client_max_interp_ratio->GetFloat();
+		float flLerpAmount = g_Vars.cl_interp->GetFloat();
+		float flLerpRatio = g_Vars.cl_interp_ratio->GetFloat();
+		
+		if (flLerpRatio == 0.0f)
+			flLerpRatio = 1.0;
+		
+		if (g_Vars.sv_client_min_interp_ratio && g_Vars.sv_client_max_interp_ratio && min_interp != 1.0f)
+			flLerpRatio = std::clamp(flLerpRatio, min_interp, max_interp);
+		else {
+			if (flLerpRatio == 0.0f)
+				flLerpRatio = 1.0f;
+		}
 
-		lagData->m_flLerpTime = GetClientInterpAmount();
+		lagData->m_flLerpTime = fmax(flLerpAmount, flLerpRatio / updaterate);
 
-		auto netchannel = Encrypted_t<INetChannel>(Interfaces::m_pEngine->GetNetChannelInfo());
+		auto netchannel = Encrypted_t<INetChannelInfo>(Interfaces::m_pEngine->GetNetChannelInfo());
+
 		lagData->m_flOutLatency = netchannel->GetLatency(FLOW_OUTGOING);
 		lagData->m_flServerLatency = netchannel->GetLatency(FLOW_INCOMING);
 	}

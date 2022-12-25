@@ -15,6 +15,7 @@ namespace Engine {
 		RESOLVE_AIR,
 		RESOLVE_LBY_UPDATE,
 		RESOLVE_LBY,
+		RESOLVE_OVERRIDE,
 	};
 
 	struct CResolverData {
@@ -36,6 +37,7 @@ namespace Engine {
 		float m_flBestDistance;
 
 		float m_flNextBodyUpdate;
+		float m_flFakeFlickUpdate;
 		float m_flFinalResolverYaw;
 		float m_flOldLowerBodyYawTarget;
 		bool  m_bCollectedFreestandData;
@@ -52,13 +54,15 @@ namespace Engine {
 		void ResolveAir(C_CSPlayer* player, C_AnimationRecord* record);
 		bool ShouldUseFreestand(C_CSPlayer* player, C_AnimationRecord* record);
 		void Freestand(C_CSPlayer* player, C_AnimationRecord* record);
-		int GetChokedPackets(C_CSPlayer* player);
+		int  GetChokedPackets(C_CSPlayer* player);
 		bool bFacingright;
 		bool bFacingleft;
 	public:
-		void ResolveManual(C_CSPlayer* player, C_AnimationRecord* record, bool bDisallow = false);
+		//void ResolveManual(C_CSPlayer* player, C_AnimationRecord* record, bool resolved);
 		void ResolveYaw(C_CSPlayer* player, C_AnimationRecord* record);
 		void PredictBodyUpdates(C_CSPlayer* player, C_AnimationRecord* record, C_AnimationRecord* prev);
+		void ResolvePoses(C_CSPlayer* player, C_AnimationRecord* record);
+		void MatchShot(C_CSPlayer* player, C_AnimationRecord* record);
 	public:
 
 		// freestanding.

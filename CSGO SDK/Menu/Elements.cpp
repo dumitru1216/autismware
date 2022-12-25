@@ -141,8 +141,6 @@ namespace Menu {
 
 				GUI::Group::BeginGroup(XorStr("Accuracy"), Vector2D(50, 100)); {
 
-					GUI::Controls::Checkbox(XorStr("Remove spread") + std::string(XorStr("#") + std::to_string(rage_current_group)), &rbot->compensate_spread, true);
-
 					if (GUI::Controls::Checkbox(XorStr("Extended backtrack") + std::string(XorStr("#") + std::to_string(rage_current_group)), &g_Vars.misc.extended_backtrack)) {
 						GUI::Controls::Hotkey(XorStr("Extended backtrack qswdecxvrftgbyhnujmiko,l") + std::string(XorStr("#") + std::to_string(rage_current_group)), &g_Vars.misc.extended_backtrack_key);
 						GUI::Controls::Slider(XorStr("Extended backtrack##amt") + std::string(XorStr("#") + std::to_string(rage_current_group)), &g_Vars.misc.extended_backtrack_time, 0.f, 1.f, XorStr("%.2fs"), 0.1f);
@@ -196,7 +194,7 @@ namespace Menu {
 						GUI::Controls::Slider(("Jitter amount"), &g_Vars.antiaim.random_jitter, -360, 360);
 					}
 
-					GUI::Controls::Dropdown(("Fake yaw"), { ("Off"), ("Static"), ("Default") }, &settings->fake_yaw);
+					GUI::Controls::Dropdown(("Fake yaw"), { ("Off"), ("Static"), ("Default"), ("Rotate"), ("Flicker") }, & settings->fake_yaw);
 					GUI::Controls::Dropdown(("Body yaw"), { ("Off"), ("Twist"), ("Static"), ("Break Logic") }, &settings->yaw);
 
 					if (settings->yaw > 0 && settings->yaw != 3) {

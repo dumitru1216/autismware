@@ -230,7 +230,6 @@
     <ClCompile Include="Features\Miscellaneous\VisibilityOptimization.cpp" />
     <ClCompile Include="SDK\Utils\vmt_swap.cpp" />
     <ClCompile Include="SDK\Classes\weapon.cpp" />
-    <ClCompile Include="Hooking\Hooks\WriteUsercmdDeltaToBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Features\Game\SimulationContext.hpp" />

@@ -328,6 +328,7 @@ namespace Engine
 		record->m_bIsShoting = false;
 		record->m_flShotTime = 0.0f;
 		record->m_bFakeWalking = false;
+		record->m_bFakeFlicking = false;
 
 		if (previous_record.IsValid()) {
 			record->m_flChokeTime = pThis->m_flSimulationTime - pThis->m_flOldSimulationTime;
@@ -531,6 +532,10 @@ namespace Engine
 				return false;
 			};
 
+			// pasting supremacy
+			if (!IsPlayerBot())
+				g_Resolver.ResolvePoses(player, current.Xor());
+
 			// show teammate lby
 			if (player->IsTeammate(player) && !IsPlayerBot())
 				player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
@@ -539,6 +544,8 @@ namespace Engine
 			if (!player->IsTeammate(C_CSPlayer::GetLocalPlayer()) && !IsPlayerBot()) {
 
 				g_Resolver.ResolveYaw(player, current.Xor());
+
+				g_Resolver.MatchShot(player, current.Xor());
 
 				// predict lby updates
 				g_Resolver.PredictBodyUpdates(player, current.Xor(), previous.Xor());
@@ -552,16 +559,12 @@ namespace Engine
 						current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY || running;
 				}
 				else
-					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE || current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY;
+					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE;
 
 				bool bResolved = current.Xor()->m_bResolved;
-				if (g_Vars.rage.override_resolver_flicks) {
-					if (current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE)
-						bResolved = true;
-				}
 
 				// if the enemy is resolved, why bother overriding?
-				g_Resolver.ResolveManual(player, current.Xor(), bResolved);
+				//g_Resolver.ResolveManual(player, current.Xor(), bResolved);
 			}
 
 			player->UpdateClientSideAnimationEx();

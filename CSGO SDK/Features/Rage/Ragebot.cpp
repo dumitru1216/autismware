@@ -168,6 +168,7 @@ namespace Interfaces
 		int hitgroup = 0;
 
 		bool center = false;
+		bool penetrated = false;
 		bool isLethal = false;
 		bool isHead = false;
 		bool isBody = false;
@@ -191,7 +192,7 @@ namespace Interfaces
 		bool preferHead = false;
 		bool preferBody = false;
 		bool hasLethal = false;
-		bool onlyHead = true;
+		bool onlyHead = false;
 		bool hasCenter = false;
 	};
 
@@ -214,12 +215,6 @@ namespace Interfaces
 	};
 
 	// hitchance
-
-#ifdef DEBUG_HITCHANCE
-	static int g_ClipTrace = 0;
-	static int g_Intersection = 0;
-	static bool g_PerfectAccuracy = false;
-#endif
 
 	struct RagebotData {
 		// spread cone
@@ -441,61 +436,12 @@ namespace Interfaces
 
 		virtual bool IsRecordValid(C_CSPlayer* player, Engine::C_LagRecord* record);
 
-		__forceinline float GetDamage(C_CSPlayer* player, Vector vecPoint, Engine::C_LagRecord* record, int hitboxIdx, bool bCalculatePoint = false);
-
 		__forceinline bool SetupTargets();
 
 		__forceinline void SelectBestTarget();
 
 		Encrypted_t<RagebotData> m_rage_data;
 	};
-
-	float C_Ragebot::GetDamage(C_CSPlayer* player, Vector vecPoint, Engine::C_LagRecord* record, int hitboxIdx, bool bCalculatePoint) {
-		auto renderable = player->GetClientRenderable();
-		if (!renderable)
-			return 1.0f;
-
-		auto model = player->GetModel();
-		if (!model)
-			return 1.0f;
-
-		auto hdr = Interfaces::m_pModelInfo->GetStudiomodel(model);
-		if (!hdr)
-			return 1.0f;
-
-		auto hitboxSet = hdr->pHitboxSet(player->m_nHitboxSet());
-		if (!hitboxSet)
-			return -1.0f;
-
-		auto hitbox = hitboxSet->pHitbox(hitboxIdx);
-		if (!hitbox)
-			return -1.0f;
-
-		Autowall::C_FireBulletData fireData;
-		fireData.m_bPenetration = m_rage_data->rbot->autowall;
-
-		matrix3x4_t* pBoneMatrix = player->m_CachedBoneData().Base();
-		Vector vecPointCalc = pBoneMatrix[hitboxSet->pHitbox(hitboxIdx)->bone].at(3);
-		Vector dir = bCalculatePoint ? vecPointCalc - m_rage_data->m_vecEyePos : vecPoint - m_rage_data->m_vecEyePos;
-		dir.Normalize();
-
-		if (m_rage_data->m_bDebugGetDamage)
-			Interfaces::m_pDebugOverlay->AddBoxOverlay(vecPointCalc, Vector(-2, -2, -2), Vector(2, 2, 2), QAngle(), 255, 255, 255, 127, 0.1f);
-
-		fireData.m_vecStart = m_rage_data->m_vecEyePos;
-		fireData.m_vecPos = vecPoint;
-		fireData.m_vecDirection = dir;
-		fireData.m_iHitgroup = hitbox->group;
-
-		fireData.m_Player = m_rage_data->m_pLocal;
-		fireData.m_TargetPlayer = player;
-		fireData.m_WeaponData = m_rage_data->m_pWeaponInfo.Xor();
-		fireData.m_Weapon = m_rage_data->m_pWeapon;
-
-		const float flDamage = Autowall::FireBullets(&fireData);
-
-		return flDamage;
-	}
 
 	bool C_Ragebot::Run(Encrypted_t<CUserCmd> cmd, C_CSPlayer* local, bool* sendPacket) {
 		if (!g_Vars.rage.enabled || !g_Vars.rage.key.enabled)
@@ -695,7 +641,7 @@ namespace Interfaces
 			!m_rage_data->m_bNoNeededScope) {
 			m_rage_data->m_pCmd->buttons |= IN_ATTACK2;
 			m_rage_data->m_pCmd->buttons &= ~IN_ATTACK;
-			//m_rage_data->m_pWeapon->m_zoomLevel( ) = 1;
+			m_rage_data->m_pWeapon->m_zoomLevel() = 1;
 			m_rage_data->m_bPredictedScope = true;
 			m_rage_data->m_bRePredict = true;
 			//m_rage_data->m_bResetCmd = false;
@@ -703,74 +649,11 @@ namespace Interfaces
 
 		auto correction = m_rage_data->m_pLocal->m_aimPunchAngle() * g_Vars.weapon_recoil_scale->GetFloat();
 
-		m_rage_data->m_pCmd->viewangles -= correction;
-		m_rage_data->m_pCmd->viewangles.Normalize();
+		if (m_rage_data->m_pCmd->buttons & IN_ATTACK) {
 
-		if (m_rage_data->rbot->compensate_spread && m_rage_data->m_pLocal->CanShoot() && m_rage_data->m_pCmd->buttons & IN_ATTACK) {
-			m_rage_data->m_bResetCmd = false;
-
-			auto weapon_inaccuracy = Engine::Prediction::Instance()->GetInaccuracy();
-			auto weapon_spread = Engine::Prediction::Instance()->GetSpread();
-
-			auto random_seed = m_rage_data->m_pCmd->random_seed & 149;
-
-			auto rand1 = g_Vars.globals.SpreadRandom[random_seed].flRand1;
-			auto rand_pi1 = g_Vars.globals.SpreadRandom[random_seed].flRandPi1;
-			auto rand2 = g_Vars.globals.SpreadRandom[random_seed].flRand2;
-			auto rand_pi2 = g_Vars.globals.SpreadRandom[random_seed].flRandPi2;
-
-			int id = m_rage_data->m_pWeapon->m_iItemDefinitionIndex();
-			auto recoil_index = m_rage_data->m_pWeapon->m_flRecoilIndex();
-
-			if (id == 64) {
-				if (m_rage_data->m_pCmd->buttons & IN_ATTACK2) {
-					rand1 = 1.0f - rand1 * rand1;
-					rand2 = 1.0f - rand2 * rand2;
-				}
-			}
-			else if (id == 28 && recoil_index < 3.0f) {
-				for (int i = 3; i > recoil_index; i--) {
-					rand1 *= rand1;
-					rand2 *= rand2;
-				}
-
-				rand1 = 1.0f - rand1;
-				rand2 = 1.0f - rand2;
-			}
-
-			auto rand_inaccuracy = rand1 * weapon_inaccuracy;
-			auto rand_spread = rand2 * weapon_spread;
-
-			Vector2D spread =
-			{
-				std::cos(rand_pi1) * rand_inaccuracy + std::cos(rand_pi2) * rand_spread,
-				std::sin(rand_pi1) * rand_inaccuracy + std::sin(rand_pi2) * rand_spread,
-			};
-
-			// 
-			// pitch/yaw/roll
-			// 
-
-			Vector side, up;
-			Vector forward = QAngle::Zero.ToVectors(&side, &up);
-
-			Vector direction = (forward + (side * spread.x) + (up * spread.y));
-
-			QAngle angles_spread = direction.ToEulerAngles();
-
-			angles_spread.x -= m_rage_data->m_pCmd->viewangles.x;
-			angles_spread.Normalize();
-
-			forward = angles_spread.ToVectorsTranspose(&side, &up);
-
-			angles_spread = (forward.ToEulerAngles(&up));
-
-			angles_spread.y += m_rage_data->m_pCmd->viewangles.y;
-			angles_spread.Normalize();
-
-			m_rage_data->m_pCmd->viewangles = angles_spread;
+			m_rage_data->m_pCmd->viewangles -= correction;
+			m_rage_data->m_pCmd->viewangles.Normalize();
 		}
-
 
 		if (m_rage_data->m_bResetCmd) {
 			*m_rage_data->m_pCmd.Xor() = cmd_backup;
@@ -850,7 +733,7 @@ namespace Interfaces
 		if (!pMatrix)
 			return false;
 
-		const auto maxTraces = 255;
+		const auto maxTraces = 256;
 		auto hits = 0;
 		CGameTrace tr;
 		for (int i = 0; i < maxTraces; ++i) {
@@ -958,7 +841,7 @@ namespace Interfaces
 		auto ShouldHitchance = [&]() {
 			// nospread enabled
 			if (m_rage_data->m_flSpread == 0.0f || m_rage_data->m_flInaccuracy == 0.0f)
-				return false;
+				return true;
 		};
 
 		float hitchance = m_rage_data->rbot->hitchance;
@@ -1576,6 +1459,8 @@ namespace Interfaces
 									resolvermode = XorStr("no fake"); break;
 								case 1:
 									resolvermode = XorStr("moving"); break;
+								case 2:
+									resolvermode = XorStr("brute"); break;
 								case 3:
 									resolvermode = XorStr("freestand"); break;
 								case 4:
@@ -1588,6 +1473,8 @@ namespace Interfaces
 									resolvermode = XorStr("flick"); break;
 								case 8:
 									resolvermode = XorStr("lby"); break;
+								//case 9:
+									//resolvermode = XorStr("override"); break;
 
 								default:
 									break;
@@ -1689,6 +1576,7 @@ namespace Interfaces
 		fireData.m_Weapon = this->m_rage_data->m_pWeapon;
 
 		pPoint->damage = Autowall::FireBullets(&fireData);
+		pPoint->penetrated = fireData.m_iPenetrationCount < 4;
 
 		int hp = std::clamp(pPoint->target->player->m_iHealth(), 0, 100);
 
@@ -1795,8 +1683,8 @@ namespace Interfaces
 		aim_target.record = record;
 		aim_target.backup = backup;
 		aim_target.preferBody = (m_rage_data->rbot->prefer_body);
-		/*									last move							 flick	                          lby if not breaking */
-		aim_target.preferHead = int(record->m_iResolverMode == 4) || int(record->m_iResolverMode == 7) || int(record->m_iResolverMode == 8) || record->m_vecVelocity.Length() > 0.1f;
+		/*								    	no fake							last move							 flick	*/
+		aim_target.preferHead = int(record->m_iResolverMode == 0) || int(record->m_iResolverMode == 4) || int(record->m_iResolverMode == 7) || record->m_vecVelocity.Length() > 0.1f;
 
 		auto addedPoints = 0;
 		for (int i = 0; i < HITBOX_MAX; i++) {

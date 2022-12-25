@@ -342,24 +342,27 @@ bool Autowall::HandleBulletPenetration(Encrypted_t<C_FireBulletData> data) {
 	int iEnterMaterial = data->m_EnterSurfaceData->game.material;
 	bool bContentsGrate = (data->m_EnterTrace.contents & CONTENTS_GRATE);
 	bool bNoDrawSurf = (data->m_EnterTrace.surface.flags & SURF_NODRAW); // this is valve code :D!
+	bool bCannotPenetrate = false;
 
-	// check if bullet can penetrarte another entity
-	if (data->m_iPenetrationCount == 0 &&
-		!bContentsGrate &&
-		!bNoDrawSurf &&
-		iEnterMaterial != CHAR_TEX_GRATE &&
-		iEnterMaterial != CHAR_TEX_GLASS)
-		return false; // no, stop
+
+	if (!data->m_iPenetrationCount)
+	{
+		if (!bNoDrawSurf && bContentsGrate)
+		{
+			if (iEnterMaterial != CHAR_TEX_GLASS)
+				bCannotPenetrate = iEnterMaterial != CHAR_TEX_GRATE;
+		}
+	}
 
 	// if we hit a grate with iPenetration == 0, stop on the next thing we hit
 	if (data->m_WeaponData->m_flPenetration <= 0.f || data->m_iPenetrationCount <= 0)
-		return false;
+		bCannotPenetrate = true;
 
 	// find exact penetration exit
 	CGameTrace ExitTrace = { };
 	if (!TraceToExit(&data->m_EnterTrace, data->m_EnterTrace.endpos, data->m_vecDirection, &ExitTrace)) {
 		// ended in solid
-		if ((Interfaces::m_pEngineTrace->GetPointContents(data->m_EnterTrace.endpos, MASK_SHOT_HULL) & MASK_SHOT_HULL) == 0)
+		if ((Interfaces::m_pEngineTrace->GetPointContents(data->m_EnterTrace.endpos, MASK_SHOT_HULL) & MASK_SHOT_HULL) == 0 || bCannotPenetrate)
 			return false;
 	}
 
@@ -530,9 +533,11 @@ float Autowall::FireBullets(Encrypted_t<C_FireBulletData> data) {
 
 		// check if we reach penetration distance, no more penetrations after that
 		// or if our modifier is super low, just stop the bullet
-		if (data->m_WeaponData->m_flPenetration < 0.1f ||
-			data->m_EnterSurfaceData->game.flPenetrationModifier < 0.1f)
+		if ((data->m_flTraceLength > 3000.f && data->m_WeaponData->m_flPenetration < 0.1f) ||
+			data->m_EnterSurfaceData->game.flPenetrationModifier < 0.1f) {
+			data->m_iPenetrationCount = 0;
 			return -1;
+		}
 
 		bool bIsBulletStopped = !HandleBulletPenetration(data);
 

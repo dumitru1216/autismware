@@ -40,7 +40,7 @@ namespace Engine {
 			if (record->m_iResolverMode == EResolverModes::RESOLVE_WALK)
 				ResolveWalk(player, record);
 
-			else if (record->m_iResolverMode == EResolverModes::RESOLVE_STAND)
+			else if (record->m_iResolverMode == EResolverModes::RESOLVE_STAND && !g_Vars.rage.override_reoslver.enabled)
 				ResolveStand(player, record);
 
 			else if (record->m_iResolverMode == EResolverModes::RESOLVE_AIR)
@@ -60,7 +60,7 @@ namespace Engine {
 
 		if ((record->m_fFlags & FL_ONGROUND) && speed > 0.1f && !record->m_bFakeWalking && !record->m_bFakeFlicking)
 			record->m_iResolverMode = EResolverModes::RESOLVE_WALK;
-		else if ((record->m_fFlags & FL_ONGROUND) && (speed <= 0.1f || record->m_bFakeWalking || record->m_bFakeFlicking))
+		else if ((record->m_fFlags & FL_ONGROUND) && (speed <= 0.1f || record->m_bFakeWalking || record->m_bFakeFlicking) && !g_Vars.rage.override_reoslver.enabled)
 			record->m_iResolverMode = EResolverModes::RESOLVE_STAND;
 		else
 			record->m_iResolverMode = EResolverModes::RESOLVE_AIR;
@@ -70,6 +70,38 @@ namespace Engine {
 
 		// write potentially resolved angles.
 		player->m_angEyeAngles().y = Math::AngleNormalize(record->m_angEyeAngles.y);
+	}
+
+	void CResolver::MatchShot(C_CSPlayer* player, C_AnimationRecord* record)
+	{
+		auto pLocal = C_CSPlayer::GetLocalPlayer();
+		if (!pLocal)
+			return;
+
+		auto anim_data = AnimationSystem::Get()->GetAnimationData(player->m_entIndex);
+
+		if (anim_data->m_AnimationRecord.size() < 3)
+			return;
+
+		auto weapon = (C_WeaponCSBaseGun*)(player->m_hActiveWeapon().Get());
+		if (!weapon)
+			return;
+
+		if (player->IsDormant())
+			return;
+
+		C_AnimationRecord previous = anim_data->m_AnimationRecord.at(1);
+
+		if (anim_data->m_AnimationRecord.size() >= 3) {
+			C_AnimationRecord previous2 = anim_data->m_AnimationRecord.at(2);
+
+			if (previous.m_bIsShoting)
+				record->m_angEyeAngles.x = previous2.m_angEyeAngles.x;
+		}
+
+		if (record->m_bIsShoting)
+			if (anim_data->m_AnimationRecord.size() >= 2)
+				record->m_angEyeAngles.x = previous.m_angEyeAngles.x;
 	}
 
 	bool CResolver::ShouldUseFreestand(C_CSPlayer* player, C_AnimationRecord* record) // allows freestanding if not in open
@@ -308,11 +340,21 @@ namespace Engine {
 		}
 
 		// expire last move after 0.75 secs if not in open.
-		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && (delta < 0.75f || !ShouldUseFreestand(player, record)))
+		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsLastmove < 1 && (delta < 0.75f || !(player->m_fFlags() & FL_ONGROUND) || !ShouldUseFreestand(player, record)))
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
 			record->m_resolver_mode = XorStr("LAST MOVE");
-			record->m_angEyeAngles.y = data.m_sMoveData.m_flLowerBodyYawTarget;
+			record->m_angEyeAngles.y = player->m_angEyeAngles().y = data.m_sMoveData.m_flLowerBodyYawTarget;
+		}
+
+		C_AnimationLayer* current_layer = &player->m_AnimOverlay()[3];
+
+		// 980 is triggered when they stop moving (can't have lby)
+		if (player->GetSequenceActivity(current_layer->m_nSequence) == 980 && !record->m_bFakeFlicking)
+		{
+			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
+			record->m_resolver_mode = XorStr("LAST MOVE");
+			record->m_angEyeAngles.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
 		}
 		else
 		{
@@ -356,7 +398,8 @@ namespace Engine {
 			return;
 
 		// nah
-		if (local->IsDead() || record->m_bFakeFlicking) {
+		if (local->IsDead() || record->m_bFakeFlicking)
+		{
 			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
 			Engine::g_ResolverData[player->EntIndex()].m_bCollectedValidMoveData = false;
 			return;
@@ -372,11 +415,13 @@ namespace Engine {
 		// get records.
 		auto anim_data = AnimationSystem::Get()->GetAnimationData(player->m_entIndex);
 
-		if (anim_data->m_AnimationRecord.size() < 2)
+		if (anim_data->m_AnimationRecord.size() < 3)
 			return;
 
 		C_AnimationLayer* current_layer = &player->m_AnimOverlay()[3];
 		C_AnimationLayer* previous_layer = &prev->m_serverAnimOverlays[3];
+
+		auto& lasttick = g_ResolverData[player->EntIndex() - 1];
 
 		// check if the player is walking
 		if (record->m_vecVelocity.Length() > 0.1f) {
@@ -402,7 +447,7 @@ namespace Engine {
 		bool lowdelta = std::abs(player->m_flLowerBodyYawTarget() - prev->m_flLowerBodyYawTarget) < 35.f;
 
 		// not breaking lby
-		if (lowdelta && !(current_layer->m_flWeight == 0.f && (previous_layer->m_flBlendIn == 1.f && current_layer->m_flCycle == 1.f)) && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
+		if (!record->m_bFakeWalking && lowdelta && !(current_layer->m_flWeight == 0.f && (previous_layer->m_flBlendIn == 1.f && current_layer->m_flCycle == 1.f)) && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY;
 			record->m_resolver_mode = XorStr("LBY");
@@ -450,7 +495,7 @@ namespace Engine {
 		// that we will have to later on use in our resolver.
 		g_ResolverData[player->EntIndex()].m_sMoveData.m_flAnimTime = player->m_flAnimationTime();
 		g_ResolverData[player->EntIndex()].m_sMoveData.m_vecOrigin = record->m_vecOrigin;
-		g_ResolverData[player->EntIndex()].m_sMoveData.m_flLowerBodyYawTarget = record->m_flLowerBodyYawTarget;
+		g_ResolverData[player->EntIndex()].m_sMoveData.m_flLowerBodyYawTarget = player->m_flLowerBodyYawTarget();
 		g_ResolverData[player->EntIndex()].m_sMoveData.m_flSimulationTime = record->m_flSimulationTime;
 		g_ResolverData[player->EntIndex()].m_bCollectedValidMoveData = true;
 	}
@@ -468,8 +513,12 @@ namespace Engine {
 			return;
 		}
 
+		// get predicted away angle for the player.
+		Vector angAway;
+		Math::VectorAngles(local->m_vecOrigin() - player->m_vecOrigin(), angAway);
+
 		// they have barely any speed. 
-		if (record->m_vecAnimationVelocity.Length2D() < 45.f)
+		if (record->m_vecAnimationVelocity.Length2D() < 30.f)
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_STAND;
 
@@ -481,115 +530,42 @@ namespace Engine {
 		record->m_iResolverMode = RESOLVE_AIR;
 		record->m_resolver_mode = XorStr("AIR");
 
-		if (data.m_bCollectedValidMoveData && pLagData->m_iMissedShotsAir < 1)
-			record->m_angEyeAngles.y = player->m_angEyeAngles().y = data.m_sMoveData.m_flLowerBodyYawTarget;
-		else
+		if (pLagData->m_iMissedShotsAir < 1)
 			record->m_angEyeAngles.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
+		else
+			record->m_angEyeAngles.y = player->m_angEyeAngles().y = angAway.y + 180.f;
 	}
-
-	void CResolver::ResolveManual(C_CSPlayer* player, C_AnimationRecord* record, bool bDisallow)
+	/*
+	void CResolver::ResolveManual(C_CSPlayer* player, C_AnimationRecord* record, bool resolved)
 	{
 		auto local = C_CSPlayer::GetLocalPlayer();
 		if (!local)
 			return;
 
-		static auto bHasTarget = false;
-		if (!g_Vars.rage.override_reoslver.enabled) {
-			bHasTarget = false;
-			return;
-		}
-
-		static std::vector<C_CSPlayer*> pTargets;
-		static auto bLastChecked = 0.f;
-
-		// check if we have a player?
-		if (bLastChecked != Interfaces::m_pGlobalVars->curtime) {
-			// update this.
-			bLastChecked = Interfaces::m_pGlobalVars->curtime;
-			pTargets.clear();
-
-			// get viewangles.
-			QAngle m_vecLocalViewAngles;
-			Interfaces::m_pEngine->GetViewAngles(m_vecLocalViewAngles);
-
-			// loop through all entitys.
-			const auto m_flNeededFOV = 20.f;
-			for (int i{ 1 }; i <= Interfaces::m_pGlobalVars->maxClients; ++i) {
-				auto entity = reinterpret_cast<C_CSPlayer*>(Interfaces::m_pEntList->GetClientEntity(i));
-				if (!entity || entity->IsDead() || !entity->IsTeammate(local))
-					continue;
-
-				auto AngleDistance = [&](QAngle& angles, const Vector& start, const Vector& end) -> float {
-					auto direction = end - start;
-					auto aimAngles = direction.ToEulerAngles();
-					auto delta = aimAngles - angles;
-					delta.Normalize();
-
-					return sqrtf(delta.x * delta.x + delta.y * delta.y);
-				};
-				// get distance based FOV.
-				float m_flBaseFOV = AngleDistance(m_vecLocalViewAngles, local->GetEyePosition(), entity->GetEyePosition());
-
-				// we have a valid target in our FOV.
-				if (m_flBaseFOV < m_flNeededFOV) {
-					// push back our target.
-					pTargets.push_back(entity);
-				}
-			}
-		}
-
-		// we dont have any targets.
-		if (pTargets.empty()) {
-			bHasTarget = false;
-			return;
-		}
-
-		auto bFoundPlayer = false;
-		// iterate through our targets.
-		for (auto& t : pTargets) {
-			if (player == t) {
-				bFoundPlayer = true;
-				break;
-			}
-		}
-
-		// we dont have one lets exit.
-		if (!bFoundPlayer)
+		if (!g_Vars.rage.override_reoslver.enabled)
 			return;
 
-		// get lag data.
-		Encrypted_t<Engine::C_EntityLagData> pLagData = Engine::LagCompensation::Get()->GetLagData(player->EntIndex());
-		if (!pLagData.IsValid()) {
+		if (resolved)
 			return;
+
+		QAngle viewangles;
+		Interfaces::m_pEngine->GetViewAngles(viewangles);
+
+		const float at_target_yaw = Math::CalcAngle(local->m_vecOrigin(), player->m_vecOrigin(), true).y;
+
+		record->m_iResolverMode = EResolverModes::RESOLVE_OVERRIDE;
+		record->m_resolver_mode = XorStr("OVERRIDE");
+		record->m_angEyeAngles.y = (Math::AngleNormalize(viewangles.y - at_target_yaw) > 0) ? at_target_yaw + 90.f : at_target_yaw - 90.f;
+	}
+	*/
+	void CResolver::ResolvePoses(C_CSPlayer* player, C_AnimationRecord* record)
+	{
+		if (record->m_iResolverMode == EResolverModes::RESOLVE_AIR) {
+			// lean_yaw
+			player->m_flPoseParameter()[2] = RandomInt(0, 4) * 0.25f;
+
+			// body_yaw
+			player->m_flPoseParameter()[11] = RandomInt(1, 3) * 0.25f;
 		}
-
-		// get current viewangles.
-		QAngle m_vecViewAngles;
-		Interfaces::m_pEngine->GetViewAngles(m_vecViewAngles);
-
-		static auto m_flLastDelta = 0.f;
-		static auto m_flLastAngle = 0.f;
-
-		const auto angAway = Math::CalcAngle(local->GetEyePosition(), player->GetEyePosition()).y;
-		auto m_flDelta = Math::AngleNormalize(m_vecViewAngles.y - angAway);
-
-		if (bHasTarget && fabsf(m_vecViewAngles.y - m_flLastAngle) < 0.1f) {
-			m_vecViewAngles.y = m_flLastAngle;
-			m_flDelta = m_flLastDelta;
-		}
-
-		bHasTarget = true;
-
-		if (g_Vars.rage.override_reoslver.enabled) {
-			if (m_flDelta > 1.2f)
-				record->m_angEyeAngles.y = angAway + 90.f;
-			else if (m_flDelta < -1.2f)
-				record->m_angEyeAngles.y = angAway - 90.f;
-			else
-				record->m_angEyeAngles.y = angAway;
-		}
-
-		m_flLastAngle = m_vecViewAngles.y;
-		m_flLastDelta = m_flDelta;
 	}
 }

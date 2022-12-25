@@ -177,9 +177,6 @@
     <ClCompile Include="SDK\Classes\weapon.cpp">
       <Filter>SDK\Entity</Filter>
     </ClCompile>
-    <ClCompile Include="Hooking\Hooks\WriteUsercmdDeltaToBuffer.cpp">
-      <Filter>Hooks</Filter>
-    </ClCompile>
     <ClCompile Include="Features\Rage\FakeLag.cpp">
       <Filter>Features</Filter>
     </ClCompile>

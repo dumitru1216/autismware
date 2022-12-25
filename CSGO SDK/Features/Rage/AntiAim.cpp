@@ -21,6 +21,7 @@ namespace Interfaces
 		void UpdateJitter();
 		void Main(bool* bSendPacket, bool* bFinalPacket, Encrypted_t<CUserCmd> cmd, bool ragebot) override;
 		void PrePrediction(bool* bSendPacket, Encrypted_t<CUserCmd> cmd) override;
+		float GetFakeAntiAim(Encrypted_t<CVariables::ANTIAIM_STATE> settings, Encrypted_t<CUserCmd> cmd);
 	private:
 		virtual float GetAntiAimX(Encrypted_t<CVariables::ANTIAIM_STATE> settings);
 		virtual float GetAntiAimY(Encrypted_t<CVariables::ANTIAIM_STATE> settings, Encrypted_t<CUserCmd> cmd);
@@ -213,29 +214,15 @@ namespace Interfaces
 		UpdateJitter();
 		cmd->viewangles.x = GetAntiAimX(settings);
 		float flYaw = GetAntiAimY(settings, cmd);
+		float flFake = GetFakeAntiAim(settings, cmd);
 
 		// https://github.com/VSES/SourceEngine2007/blob/master/se2007/engine/cl_main.cpp#L1877-L1881
 		if (!*bSendPacket || !*bFinalPacket) {
 			cmd->viewangles.y = flYaw;
+			Distort(cmd);
 		}
 		else {
-			bool bSwitch = false;
-			// make our fake 180 degrees away from our real, and let's add a jitter 
-			// ranging from -90 to 90 to make shit even fuckier 
-			std::uniform_int_distribution random(-90, 90);
-
-			switch (settings->fake_yaw) {
-			case 1: // 180
-				cmd->viewangles.y = Math::AngleNormalize(flYaw + 180);
-				break;
-
-			case 2:
-				cmd->viewangles.y = Math::AngleNormalize(flYaw + 180 + random(generator));
-				break;
-
-			default:
-				break;
-			}
+			cmd->viewangles.y = flFake + 180.f;
 		}
 
 		static bool bNegative = false;
@@ -265,7 +252,46 @@ namespace Interfaces
 				break;
 			}
 		}
-		Distort(cmd);
+	}
+
+	float C_AntiAimbot::GetFakeAntiAim(Encrypted_t<CVariables::ANTIAIM_STATE> settings, Encrypted_t<CUserCmd> cmd)
+	{
+		float flYaw = GetAntiAimY(settings, cmd);
+
+		bool bSwitch = false;
+		// make our fake 180 degrees away from our real, and let's add a jitter 
+		// ranging from -90 to 90 to make shit even fuckier 
+		std::uniform_int_distribution random(-120, 120);
+
+		static int negative = false;
+
+		switch (settings->fake_yaw) {
+		case 1: // 180
+			flYaw = Math::AngleNormalize(cmd->viewangles.y + 180);
+			break;
+		case 2:
+			flYaw = Math::AngleNormalize(cmd->viewangles.y + 180 + random(generator));
+			break;
+			// rotate
+		case 3:
+			flYaw = Math::AngleNormalize(cmd->viewangles.y + 90 + std::fmod(Interfaces::m_pGlobalVars->curtime * 360.f, 180.f));
+			if (flYaw == 1.f)
+				flYaw = Math::AngleNormalize(cmd->viewangles.y + 180 + std::fmod(Interfaces::m_pGlobalVars->curtime * 360.f, 0.f));
+			break;
+
+			// flicker
+		case 4:
+			negative ? flYaw = Math::AngleNormalize(cmd->viewangles.y + 90 + std::fmod(Interfaces::m_pGlobalVars->curtime * 360.f, 180.f)) : cmd->viewangles.y = Math::AngleNormalize(cmd->viewangles.y - 90 + std::fmod(Interfaces::m_pGlobalVars->curtime * 360.f, 180.f));
+			if (flYaw == 1.f)
+				negative ? flYaw + std::fmod(Interfaces::m_pGlobalVars->curtime * 360.f, 0.f) : flYaw + std::fmod(Interfaces::m_pGlobalVars->curtime * 360.f, 0.f);
+			negative = !negative;
+			break;
+
+		default:
+			break;
+		}
+
+		return flYaw;
 	}
 
 	void C_AntiAimbot::PrePrediction(bool* bSendPacket, Encrypted_t<CUserCmd> cmd) {

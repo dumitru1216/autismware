@@ -119,7 +119,7 @@ namespace Hooked
 
 	using WriteUsercmdDeltaToBufferFn = bool(__thiscall*)(void*, int, void*, int, int, bool);
 	inline WriteUsercmdDeltaToBufferFn oWriteUsercmdDeltaToBuffer;
-	bool __fastcall WriteUsercmdDeltaToBuffer(void* ECX, void* EDX, int nSlot, void* buf, int from, int to, bool isnewcommand);
+	bool WriteUsercmdDeltaToBuffer(void* ECX, void* EDX, int nSlot, void* buf, int from, int to, bool isnewcommand);
 
 	IClientNetworkable* hkCreateCCSPlayer(int entnum, int serialNum);
 	bool __fastcall hkSetupBones(uintptr_t ecx, void* edx, matrix3x4_t* matrix, int bone_count, int bone_mask, float time);

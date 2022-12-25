@@ -697,7 +697,6 @@ public:
 	config_option(bool, auto_fire, false);
 	config_option(bool, aim_lock, false);
 	//config_option( bool, remove_recoil, false );
-	config_option(bool, compensate_spread, false);
 	config_option(bool, friendly_fire, false);
 	config_option(bool, exploit_enable, false);
 	config_option(bool, autowall, false);
