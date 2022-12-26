@@ -1097,7 +1097,8 @@ public:
 	config_option(bool, remove_sleeves, false);
 	config_option(bool, remove_hands, false);
 	config_option(bool, remove_bob, false);
-
+	config_option(bool, draw_layer_info, false);
+	config_option(int, layer, 2);
 	config_option(bool, preserve_killfeed, false);
 	config_option(float, preserve_killfeed_time, 1.0f);
 

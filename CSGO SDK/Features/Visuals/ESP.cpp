@@ -1688,6 +1688,35 @@ void CEsp::DrawInfo(C_CSPlayer* player, BBox_t bbox, player_info_t player_info) 
 		}
 	}
 
+	if (local && anim_data && !player->IsDormant() && lag_data.IsValid() && anim_data->m_AnimationRecord.size() >= 2 && g_Vars.esp.draw_layer_info) {
+		int layer = g_Vars.esp.layer;
+		auto prev = Encrypted_t<Engine::C_AnimationRecord>(&anim_data->m_AnimationRecord.at(1));
+		C_AnimationLayer* current_layer;
+		C_AnimationLayer* previous;
+		
+		// i tried doing this the non-retarded way with (&player->m_AnimOverlay()[layer]) but it just didn't work
+		switch (layer) {
+		case 0: current_layer = &player->m_AnimOverlay()[1]; break;
+		case 1: current_layer = &player->m_AnimOverlay()[2]; break;
+		case 2: current_layer = &player->m_AnimOverlay()[3]; break;
+		case 3: current_layer = &player->m_AnimOverlay()[4]; break;
+		case 4: current_layer = &player->m_AnimOverlay()[5]; break;
+		case 5: current_layer = &player->m_AnimOverlay()[6]; break;
+		case 6: current_layer = &player->m_AnimOverlay()[7]; break;
+		case 7: current_layer = &player->m_AnimOverlay()[8]; break;
+		case 8: current_layer = &player->m_AnimOverlay()[9]; break;
+		case 9: current_layer = &player->m_AnimOverlay()[10]; break;
+		case 10: current_layer = &player->m_AnimOverlay()[11]; break;
+		case 11: current_layer = &player->m_AnimOverlay()[12]; break;
+		case 12: current_layer = &player->m_AnimOverlay()[13]; break;}
+
+		g_Vars.globals.m_vecTextInfo[player->EntIndex()].emplace_back(FloatColor(255, 255, 255, (int)(180 * m_flAlpha[player->EntIndex()])), std::string("C ") + std::to_string(current_layer->m_flCycle));
+		g_Vars.globals.m_vecTextInfo[player->EntIndex()].emplace_back(FloatColor(255, 255, 255, (int)(180 * m_flAlpha[player->EntIndex()])), std::string("W ") + std::to_string(current_layer->m_flWeight));
+		g_Vars.globals.m_vecTextInfo[player->EntIndex()].emplace_back(FloatColor(255, 255, 255, (int)(180 * m_flAlpha[player->EntIndex()])), std::string("P ") + std::to_string(current_layer->m_flPlaybackRate));
+		g_Vars.globals.m_vecTextInfo[player->EntIndex()].emplace_back(FloatColor(255, 255, 255, (int)(180 * m_flAlpha[player->EntIndex()])), std::string("B ") + std::to_string(current_layer->m_flBlendIn));
+		
+	}
+
 	int i = 0;
 	for (auto text : g_Vars.globals.m_vecTextInfo[player->EntIndex()]) {
 		Render::Engine::pixel_reg.string(bbox.x + bbox.w + 2, bbox.y + i, text.first.ToRegularColor(), text.second.c_str());

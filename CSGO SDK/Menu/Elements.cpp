@@ -486,6 +486,24 @@ namespace Menu {
 
 				GUI::Group::BeginGroup(XorStr("Other ESP"), Vector2D(50, 50));
 				{
+					if (GUI::Controls::Checkbox(XorStr("Anim layer info"), &g_Vars.esp.draw_layer_info)) {
+						GUI::Controls::Dropdown(XorStr("Layer"), {
+							XorStr("1"),
+							XorStr("2"),
+							XorStr("3"),
+							XorStr("4"),
+							XorStr("5"),
+							XorStr("6"),
+							XorStr("7"),
+							XorStr("8"),
+							XorStr("9"),
+							XorStr("10"),
+							XorStr("11"),
+							XorStr("12"),
+							XorStr("13"), }, &g_Vars.esp.layer);
+					}
+
+
 					if (GUI::Controls::Checkbox(XorStr("Preserve killfeed"), &g_Vars.esp.preserve_killfeed)) {
 						// note - alpha;
 						// maybe make a dropdown, with options such as:
