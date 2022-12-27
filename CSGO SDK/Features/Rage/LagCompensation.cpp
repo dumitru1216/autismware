@@ -126,11 +126,14 @@ namespace Engine
 		if (!pLocal)
 			return true;
 
+		float avg_latency = pNetChannel->GetAvgLatency(FLOW_OUTGOING) + pNetChannel->GetAvgLatency(FLOW_INCOMING);
+		int arrival_tick = Interfaces::m_pGlobalVars->tickcount + 1 + TIME_TO_TICKS(avg_latency);
+
 		// use prediction curtime for this.
 		float curtime = TICKS_TO_TIME(pLocal->m_nTickBase());
 
 		// correct is the amount of time we have to correct game time,
-		float correct = g_Vars.globals.m_lerp + pNetChannel->GetLatency(FLOW_OUTGOING);
+		float correct = std::clamp(g_Vars.globals.m_lerp + pNetChannel->GetLatency(FLOW_OUTGOING), 0.f, 1.f) - TICKS_TO_TIME(arrival_tick + TIME_TO_TICKS(g_Vars.globals.m_lerp) - Interfaces::m_pGlobalVars->tickcount);
 
 		// stupid fake latency goes into the incoming latency.
 		float in = pNetChannel->GetLatency(FLOW_INCOMING);

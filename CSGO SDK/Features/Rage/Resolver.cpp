@@ -90,18 +90,14 @@ namespace Engine {
 		if (player->IsDormant())
 			return;
 
-		C_AnimationRecord previous = anim_data->m_AnimationRecord.at(1);
+		C_AnimationRecord* previous = &anim_data->m_AnimationRecord.at(1);
+		C_AnimationRecord* previous2 = &anim_data->m_AnimationRecord.at(2);
 
-		if (anim_data->m_AnimationRecord.size() >= 3) {
-			C_AnimationRecord previous2 = anim_data->m_AnimationRecord.at(2);
+		if (record->m_bIsShoting && anim_data->m_AnimationRecord.size() >= 2)
+			record->m_angEyeAngles.x = previous->m_angEyeAngles.x;
 
-			if (previous.m_bIsShoting)
-				record->m_angEyeAngles.x = previous2.m_angEyeAngles.x;
-		}
-
-		if (record->m_bIsShoting)
-			if (anim_data->m_AnimationRecord.size() >= 2)
-				record->m_angEyeAngles.x = previous.m_angEyeAngles.x;
+		if (previous->m_bIsShoting && anim_data->m_AnimationRecord.size() >= 3)
+			record->m_angEyeAngles.x = previous2->m_angEyeAngles.x;
 	}
 
 	bool CResolver::ShouldUseFreestand(C_CSPlayer* player, C_AnimationRecord* record) // allows freestanding if not in open
@@ -441,13 +437,10 @@ namespace Engine {
 			return;
 		}
 
-		// todo: draw layer info on esp for debug
 		// https://www.unknowncheats.me/forum/counterstrike-global-offensive/251015-detecting-resolving-lby-breakers.html
 
-		bool lowdelta = std::abs(player->m_flLowerBodyYawTarget() - prev->m_flLowerBodyYawTarget) < 35.f;
-
 		// not breaking lby
-		if (!record->m_bFakeWalking && lowdelta && !(current_layer->m_flWeight == 0.f && (previous_layer->m_flBlendIn == 1.f && current_layer->m_flCycle == 1.f)) && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
+		if (current_layer->m_flCycle > 0.98f && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY;
 			record->m_resolver_mode = XorStr("LBY");
