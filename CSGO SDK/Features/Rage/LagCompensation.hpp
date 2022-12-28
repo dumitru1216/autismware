@@ -8,14 +8,6 @@
 #include <deque>
 #include "AnimationSystem.hpp"
 
-#define RESOLVER_SIDE_FAKE 0
-#define RESOLVER_SIDE_LEFT 1
-#define RESOLVER_SIDE_RIGHT -1
-
-#define ANIMATION_RESOLVER_FAKE 1
-#define ANIMATION_RESOLVER_LEFT 2
-#define ANIMATION_RESOLVER_RIGHT 4
-
 namespace Engine
 {
 	// base lag record, generally used for backup and restore

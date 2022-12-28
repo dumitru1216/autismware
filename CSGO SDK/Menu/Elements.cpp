@@ -855,15 +855,176 @@ namespace Menu {
 					GUI::Group::EndGroup();
 				}
 			}
-
+			/*
 			if (GUI::Form::BeginTab(5, XorStr("E"))) {
+				static int weapon_id;
+				GUI::Group::BeginGroup(XorStr("General"), Vector2D(50, 100)); {
+					GUI::Controls::Checkbox(XorStr("Enabled##Skins"), &g_Vars.m_global_skin_changer.m_active);
 
-			}
+					static std::vector<std::string> weapons;
+					for (int i = 0; i < weapon_skins.size(); ++i) {
+						auto whatevertheFUCK = weapon_skins[i];
+						std::string ha{ whatevertheFUCK.display_name };
+
+						// get rid of weapon_
+						if (ha[0] == 'w' && ha[1] == 'e' && ha[6] == '_')
+							ha.erase(0, 7);
+
+						// get rid of knife_				
+						if (ha[0] == 'k' && ha[1] == 'n' && ha[5] == '_')
+							ha.erase(0, 6);
+
+						weapons.push_back(ha.data());
+					}
+					if (!weapons.empty()) {
+						GUI::Controls::Listbox(XorStr("Weapon skin"), weapons, &weapon_id, true, 13);
+					}
+
+					weapons.clear();
+
+					if (GUI::Controls::Checkbox(XorStr("Override knife model##knife"), &g_Vars.m_global_skin_changer.m_knife_changer)) {
+						if (k_knife_names.at(g_Vars.m_global_skin_changer.m_knife_vector_idx).definition_index != g_Vars.m_global_skin_changer.m_knife_idx) {
+							auto it = std::find_if(k_knife_names.begin(), k_knife_names.end(), [&](const WeaponName_t& a) {
+								return a.definition_index == g_Vars.m_global_skin_changer.m_knife_idx;
+								});
+
+							if (on_cfg_load_knives) {
+								if (it != k_knife_names.end())
+									g_Vars.m_global_skin_changer.m_knife_vector_idx = std::distance(k_knife_names.begin(), it);
+
+								on_cfg_load_knives = false;
+							}
+						}
+
+						std::vector<std::string> knifes;
+						static bool init_knife_names = false;
+						for (int i = 0; i < k_knife_names.size(); ++i) {
+							auto whatevertheFUCK = k_knife_names[i];
+							knifes.push_back(whatevertheFUCK.name);
+						}
+
+						if (!knifes.empty()) {
+							GUI::Controls::Dropdown(XorStr("Knife models"), knifes, &g_Vars.m_global_skin_changer.m_knife_vector_idx);
+							g_Vars.m_global_skin_changer.m_knife_idx = k_knife_names[g_Vars.m_global_skin_changer.m_knife_vector_idx].definition_index;
+						}
+
+						knifes.clear();
+					}
+
+					if (GUI::Controls::Checkbox(XorStr("Override glove model##glove"), &g_Vars.m_global_skin_changer.m_glove_changer)) {
+
+						if (k_glove_names.at(g_Vars.m_global_skin_changer.m_gloves_vector_idx).definition_index != g_Vars.m_global_skin_changer.m_gloves_idx) {
+							auto it = std::find_if(k_glove_names.begin(), k_glove_names.end(), [&](const WeaponName_t& a) {
+								return a.definition_index == g_Vars.m_global_skin_changer.m_gloves_idx;
+								});
+
+							if (on_cfg_load_gloves) {
+								if (it != k_glove_names.end())
+									g_Vars.m_global_skin_changer.m_gloves_vector_idx = std::distance(k_glove_names.begin(), it);
+								on_cfg_load_gloves = false;
+							}
+						}
+
+						static std::vector<std::string> gloves;
+						for (int i = 0; i < k_glove_names.size(); ++i) {
+							auto whatevertheFUCK = k_glove_names[i];
+							gloves.push_back(whatevertheFUCK.name);
+						}
+
+						static int bruh = g_Vars.m_global_skin_changer.m_gloves_vector_idx;
+						if (!gloves.empty()) {
+							GUI::Controls::Dropdown(XorStr("Glove model"), gloves, &g_Vars.m_global_skin_changer.m_gloves_vector_idx);
+							g_Vars.m_global_skin_changer.m_gloves_idx = k_glove_names[g_Vars.m_global_skin_changer.m_gloves_vector_idx].definition_index;
+						}
+
+						if (bruh != g_Vars.m_global_skin_changer.m_gloves_vector_idx) {
+							g_Vars.m_global_skin_changer.m_update_skins = true;
+							g_Vars.m_global_skin_changer.m_update_gloves = true;
+
+							bruh = g_Vars.m_global_skin_changer.m_gloves_vector_idx;
+						}
+
+						gloves.clear();
+					}
+
+					GUI::Group::EndGroup();
+				}
+
+				GUI::Group::BeginGroup(XorStr("Weapon options"), Vector2D(50, 100)); {
+					auto& current_weapon = weapon_skins[weapon_id];
+					auto idx = current_weapon.id;
+
+					auto& skin_data = g_Vars.m_skin_changer;
+					CVariables::skin_changer_data* skin = nullptr;
+					for (size_t i = 0u; i < skin_data.Size(); ++i) {
+						skin = skin_data[i];
+						if (skin->m_definition_index == idx) {
+							break;
+						}
+					}
+
+					if (skin) {
+						GUI::Controls::Checkbox(XorStr("Filter paint kits"), &skin->m_filter_paint_kits);
+
+						if (skin->m_filter_paint_kits) {
+							auto& kit = current_weapon.m_kits[skin->m_paint_kit_index];
+							if (kit.id != skin->m_paint_kit) {
+								auto it = std::find_if(current_weapon.m_kits.begin(), current_weapon.m_kits.end(), [skin](paint_kit& a) {
+									return a.id == skin->m_paint_kit;
+									});
+
+								if (it != current_weapon.m_kits.end())
+									skin->m_paint_kit_index = std::distance(current_weapon.m_kits.begin(), it);
+							}
+						}
+
+						static int bruh1 = skin->m_paint_kit_index;
+						static int bruh2 = skin->m_paint_kit_no_filter;
+
+						if (skin->m_filter_paint_kits) {
+							static std::vector<std::string> paint_kits;
+
+							for (int i = 0; i < current_weapon.m_kits.size(); ++i) {
+								auto whatevertheFUCK = current_weapon.m_kits[i];
+								paint_kits.push_back(whatevertheFUCK.name.data());
+							}
+
+							if (!paint_kits.empty()) {
+								GUI::Controls::Listbox(XorStr("Paint kits"), paint_kits, &skin->m_paint_kit_index, true, 13);
+							}
+
+							paint_kits.clear();
+						}
+						else {
+							if (!g_Vars.globals.m_vecPaintKits.empty()) {
+								GUI::Controls::Listbox(XorStr("Paint kits"), g_Vars.globals.m_vecPaintKits, &skin->m_paint_kit_no_filter, true, 13);
+							}
+						}
+
+						if ((bruh1 != skin->m_paint_kit_index) || (bruh2 != skin->m_paint_kit_no_filter)) {
+							g_Vars.m_global_skin_changer.m_update_skins = true;
+							if (current_weapon.glove)
+								g_Vars.m_global_skin_changer.m_update_gloves = true;
+
+							bruh1 = skin->m_paint_kit_index;
+							bruh2 = skin->m_paint_kit_no_filter;
+						}
+
+						skin->m_paint_kit = skin->m_filter_paint_kits ? current_weapon.m_kits[skin->m_paint_kit_index].id : skin->m_paint_kit_no_filter;
+
+						skin->m_enabled = true;
+
+						GUI::Controls::Slider(XorStr("Wear"), &skin->m_wear, 0.00000001f, 1.00f, XorStr("%.5f%%"));
+						GUI::Controls::Slider(XorStr("Seed"), &skin->m_seed, 1, 1000, XorStr("%.0f"));
+					}
+
+					GUI::Group::EndGroup();
+				}
+			}*/
 
 			GUI::Form::EndWindow();
 		}
 	}
-
 	void Draw() {
 		DrawMenu();
 	}

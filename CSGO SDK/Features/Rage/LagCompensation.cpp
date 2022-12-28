@@ -31,7 +31,7 @@
 #include <sstream>
 
 #define MT_SETUP_BONES
-//#define DEBUG_RESOLVER
+
 namespace Engine
 {
 	struct LagCompData {
@@ -47,7 +47,6 @@ namespace Engine
 	public:
 		virtual void Update();
 		virtual bool IsRecordOutOfBounds(const Engine::C_LagRecord& record, float target_time = 0.2f, int tickbase_shift = -1, bool bDeadTimeCheck = true) const;
-		virtual void SetupLerpTime();
 
 		virtual Encrypted_t<C_EntityLagData> GetLagData(int entindex) {
 			C_EntityLagData* data = nullptr;
@@ -55,8 +54,6 @@ namespace Engine
 				data = &lagData->m_PlayerHistory.at(entindex);
 			return Encrypted_t<C_EntityLagData>(data);
 		}
-
-
 
 		virtual float GetLerp() const {
 			return std::max(g_Vars.cl_interp->GetFloat(), g_Vars.cl_interp_ratio->GetFloat() / g_Vars.cl_updaterate->GetFloat());
@@ -69,7 +66,7 @@ namespace Engine
 		C_LagCompensation() : lagData(&_lagcomp_data) { };
 		virtual ~C_LagCompensation() { };
 	private:
-
+		virtual void SetupLerpTime();
 		Encrypted_t<LagCompData> lagData;
 	};
 
@@ -94,7 +91,7 @@ namespace Engine
 		if (!local || !g_Vars.globals.HackIsReady)
 			return;
 
-
+		SetupLerpTime();
 
 		for (int i = 1; i <= Interfaces::m_pGlobalVars->maxClients; ++i) {
 			auto player = C_CSPlayer::GetPlayerByIndex(i);
@@ -126,21 +123,14 @@ namespace Engine
 		if (!pLocal)
 			return true;
 
-		float avg_latency = pNetChannel->GetAvgLatency(FLOW_OUTGOING) + pNetChannel->GetAvgLatency(FLOW_INCOMING);
-		int arrival_tick = Interfaces::m_pGlobalVars->tickcount + 1 + TIME_TO_TICKS(avg_latency);
-
 		// use prediction curtime for this.
 		float curtime = TICKS_TO_TIME(pLocal->m_nTickBase());
 
 		// correct is the amount of time we have to correct game time,
-		float correct = std::clamp(g_Vars.globals.m_lerp + pNetChannel->GetLatency(FLOW_OUTGOING), 0.f, 1.f) - TICKS_TO_TIME(arrival_tick + TIME_TO_TICKS(g_Vars.globals.m_lerp) - Interfaces::m_pGlobalVars->tickcount);
-
-		// stupid fake latency goes into the incoming latency.
-		float in = pNetChannel->GetLatency(FLOW_INCOMING);
-		correct += in;
+		float correct = lagData.Xor()->m_flLerpTime + lagData.Xor()->m_flServerLatency + lagData.Xor()->m_flOutLatency;
 
 		// check bounds [ 0, sv_maxunlag ]
-		std::clamp(correct, 0.f, g_Vars.sv_maxunlag->GetFloat());
+		std::clamp(correct, 0.f, 1.f);
 
 		// calculate difference between tick sent by player and our latency based tick.
 		// ensure this record isn't too old.
@@ -148,27 +138,25 @@ namespace Engine
 	}
 
 	void C_LagCompensation::SetupLerpTime() {
+		float updaterate = g_Vars.cl_updaterate->GetFloat();
 
-		float updaterate = std::clamp(g_Vars.cl_updaterate->GetFloat(), g_Vars.sv_minupdaterate->GetFloat(), g_Vars.sv_maxupdaterate->GetFloat());
+		float minupdaterate = g_Vars.sv_minupdaterate->GetFloat();
+		float maxupdaterate = g_Vars.sv_maxupdaterate->GetFloat();
+
 		float min_interp = g_Vars.sv_client_min_interp_ratio->GetFloat();
 		float max_interp = g_Vars.sv_client_max_interp_ratio->GetFloat();
+
 		float flLerpAmount = g_Vars.cl_interp->GetFloat();
 		float flLerpRatio = g_Vars.cl_interp_ratio->GetFloat();
+		flLerpRatio = Math::Clamp(flLerpRatio, min_interp, max_interp);
 		
 		if (flLerpRatio == 0.0f)
-			flLerpRatio = 1.0;
-		
-		if (g_Vars.sv_client_min_interp_ratio && g_Vars.sv_client_max_interp_ratio && min_interp != 1.0f)
-			flLerpRatio = std::clamp(flLerpRatio, min_interp, max_interp);
-		else {
-			if (flLerpRatio == 0.0f)
-				flLerpRatio = 1.0f;
-		}
+			flLerpRatio = 1.0f;
 
-		lagData->m_flLerpTime = fmax(flLerpAmount, flLerpRatio / updaterate);
+		float updateRate = Math::Clamp(updaterate, minupdaterate, maxupdaterate);
+		lagData->m_flLerpTime = std::fmaxf(flLerpAmount, flLerpRatio / updateRate);
 
-		auto netchannel = Encrypted_t<INetChannelInfo>(Interfaces::m_pEngine->GetNetChannelInfo());
-
+		auto netchannel = Encrypted_t<INetChannel>(Interfaces::m_pEngine->GetNetChannelInfo());
 		lagData->m_flOutLatency = netchannel->GetLatency(FLOW_OUTGOING);
 		lagData->m_flServerLatency = netchannel->GetLatency(FLOW_INCOMING);
 	}
@@ -183,22 +171,19 @@ namespace Engine
 			return;
 		}
 
-		bool isDormant = player->IsDormant();
-
 		// no need to store insane amount of data
-		while (pThis->m_History.size() > 255) {
+		while (pThis->m_History.size() > int(1.0f / Interfaces::m_pGlobalVars->interval_per_tick)) {
 			pThis->m_History.pop_back();
 		}
 
-		if (isDormant) {
+		if (player->IsDormant()) {
 			pThis->m_flLastUpdateTime = 0.0f;
-			if (pThis->m_History.size() > 1 && pThis->m_History.front().m_bTeleportDistance) {
+			if (pThis->m_History.size() > 0 && pThis->m_History.front().m_bTeleportDistance) {
 				pThis->m_History.clear();
 			}
 
 			return;
 		}
-
 
 		if (info.userId != pThis->m_iUserID) {
 			pThis->Clear();

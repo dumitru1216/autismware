@@ -1696,7 +1696,7 @@ void CEsp::DrawInfo(C_CSPlayer* player, BBox_t bbox, player_info_t player_info) 
 		g_Vars.globals.m_vecTextInfo[player->EntIndex()].emplace_back(FloatColor(255, 255, 255, (int)(180 * m_flAlpha[player->EntIndex()])), std::string("W ") + std::to_string(current_layer->m_flWeight));
 		g_Vars.globals.m_vecTextInfo[player->EntIndex()].emplace_back(FloatColor(255, 255, 255, (int)(180 * m_flAlpha[player->EntIndex()])), std::string("P ") + std::to_string(current_layer->m_flPlaybackRate));
 		g_Vars.globals.m_vecTextInfo[player->EntIndex()].emplace_back(FloatColor(255, 255, 255, (int)(180 * m_flAlpha[player->EntIndex()])), std::string("B ") + std::to_string(current_layer->m_flBlendIn));
-		
+		g_Vars.globals.m_vecTextInfo[player->EntIndex()].emplace_back(FloatColor(50, 255, 50, (int)(180 * m_flAlpha[player->EntIndex()])), std::to_string(player->GetSequenceActivity(current_layer->m_nSequence)));
 	}
 
 	int i = 0;

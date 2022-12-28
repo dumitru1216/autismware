@@ -342,16 +342,6 @@ namespace Engine {
 			record->m_resolver_mode = XorStr("LAST MOVE");
 			record->m_angEyeAngles.y = player->m_angEyeAngles().y = data.m_sMoveData.m_flLowerBodyYawTarget;
 		}
-
-		C_AnimationLayer* current_layer = &player->m_AnimOverlay()[3];
-
-		// 980 is triggered when they stop moving (can't have lby)
-		if (player->GetSequenceActivity(current_layer->m_nSequence) == 980 && !record->m_bFakeFlicking)
-		{
-			record->m_iResolverMode = EResolverModes::RESOLVE_LAST_LBY;
-			record->m_resolver_mode = XorStr("LAST MOVE");
-			record->m_angEyeAngles.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
-		}
 		else
 		{
 			if (ShouldUseFreestand(player, record)) // if freestand would be useful.
@@ -415,9 +405,7 @@ namespace Engine {
 			return;
 
 		C_AnimationLayer* current_layer = &player->m_AnimOverlay()[3];
-		C_AnimationLayer* previous_layer = &prev->m_serverAnimOverlays[3];
-
-		auto& lasttick = g_ResolverData[player->EntIndex() - 1];
+		//C_AnimationLayer* previous_layer = &prev->m_serverAnimOverlays[3];
 
 		// check if the player is walking
 		if (record->m_vecVelocity.Length() > 0.1f) {
@@ -428,7 +416,7 @@ namespace Engine {
 		}
 
 		// we have no reliable move data
-		if (!Engine::g_ResolverData[player->EntIndex()].m_bCollectedValidMoveData && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget)
+		if (!Engine::g_ResolverData[player->EntIndex()].m_bCollectedValidMoveData && current_layer->m_flCycle < 0.1f && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget)
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
 			record->m_resolver_mode = XorStr("FLICK");
@@ -437,10 +425,8 @@ namespace Engine {
 			return;
 		}
 
-		// https://www.unknowncheats.me/forum/counterstrike-global-offensive/251015-detecting-resolving-lby-breakers.html
-
 		// not breaking lby
-		if (current_layer->m_flCycle > 0.98f && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
+		if (record->m_vecVelocity.Length() < 0.1f && current_layer->m_flCycle > 0.98f && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY;
 			record->m_resolver_mode = XorStr("LBY");
@@ -448,7 +434,8 @@ namespace Engine {
 			record->m_angEyeAngles.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
 			return;
 		}
-		else if (record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget) // literally never misses :O
+		// cycle check to make sure we dont miss delayed (> 1.1) break timers.
+		else if (current_layer->m_flCycle < 0.1f && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget) // literally never misses :O
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
 			record->m_resolver_mode = XorStr("FLICK");
