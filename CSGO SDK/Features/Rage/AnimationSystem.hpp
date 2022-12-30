@@ -39,7 +39,7 @@ namespace Engine
 	class C_AnimationRecord {
 	public:
 		bool m_bIsInvalid;
-		bool m_bIsShoting;
+		bool m_bIsShooting;
 		bool m_bTeleportDistance;
 		bool m_bShiftingTickbase;
 		bool m_bResolved;
@@ -52,6 +52,7 @@ namespace Engine
 		Vector m_vecVelocity;
 		Vector m_vecAnimationVelocity;
 		QAngle m_angEyeAngles;
+		QAngle m_angPrevEyeAngles;
 		QAngle m_angLastFlick;
 
 		int m_fFlags;

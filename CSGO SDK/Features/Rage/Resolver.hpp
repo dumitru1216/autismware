@@ -62,7 +62,7 @@ namespace Engine {
 		void ResolveYaw(C_CSPlayer* player, C_AnimationRecord* record);
 		void PredictBodyUpdates(C_CSPlayer* player, C_AnimationRecord* record, C_AnimationRecord* prev);
 		void ResolvePoses(C_CSPlayer* player, C_AnimationRecord* record);
-		void MatchShot(C_CSPlayer* player, C_AnimationRecord* record);
+		void MatchShot(C_CSPlayer* player, C_AnimationRecord* record, C_AnimationRecord* prev);
 	public:
 
 		// freestanding.

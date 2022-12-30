@@ -55,7 +55,6 @@ namespace Engine {
 
 	void CResolver::ResolveYaw(C_CSPlayer* player, C_AnimationRecord* record)
 	{
-
 		float speed = record->m_vecAnimationVelocity.Length();
 
 		if ((record->m_fFlags & FL_ONGROUND) && speed > 0.1f && !record->m_bFakeWalking && !record->m_bFakeFlicking)
@@ -72,7 +71,7 @@ namespace Engine {
 		player->m_angEyeAngles().y = Math::AngleNormalize(record->m_angEyeAngles.y);
 	}
 
-	void CResolver::MatchShot(C_CSPlayer* player, C_AnimationRecord* record)
+	void CResolver::MatchShot(C_CSPlayer* player, C_AnimationRecord* record, C_AnimationRecord* prev)
 	{
 		auto pLocal = C_CSPlayer::GetLocalPlayer();
 		if (!pLocal)
@@ -87,17 +86,10 @@ namespace Engine {
 		if (!weapon)
 			return;
 
-		if (player->IsDormant())
-			return;
-
-		C_AnimationRecord* previous = &anim_data->m_AnimationRecord.at(1);
-		C_AnimationRecord* previous2 = &anim_data->m_AnimationRecord.at(2);
-
-		if (record->m_bIsShoting && anim_data->m_AnimationRecord.size() >= 2)
-			record->m_angEyeAngles.x = previous->m_angEyeAngles.x;
-
-		if (previous->m_bIsShoting && anim_data->m_AnimationRecord.size() >= 3)
-			record->m_angEyeAngles.x = previous2->m_angEyeAngles.x;
+		if (!record->m_bIsShooting && !prev->m_bIsShooting)
+			record->m_angPrevEyeAngles.x = record->m_angEyeAngles.x;
+		else
+			record->m_angEyeAngles.x = record->m_angPrevEyeAngles.x;
 	}
 
 	bool CResolver::ShouldUseFreestand(C_CSPlayer* player, C_AnimationRecord* record) // allows freestanding if not in open
@@ -405,7 +397,7 @@ namespace Engine {
 			return;
 
 		C_AnimationLayer* current_layer = &player->m_AnimOverlay()[3];
-		//C_AnimationLayer* previous_layer = &prev->m_serverAnimOverlays[3];
+		C_AnimationLayer* previous_layer = &prev->m_serverAnimOverlays[3];
 
 		// check if the player is walking
 		if (record->m_vecVelocity.Length() > 0.1f) {
@@ -426,7 +418,7 @@ namespace Engine {
 		}
 
 		// not breaking lby
-		if (record->m_vecVelocity.Length() < 0.1f && current_layer->m_flCycle > 0.98f && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
+		if (record->m_vecVelocity.Length() < 0.1f && current_layer->m_flCycle > 0.987f && previous_layer->m_flCycle > 0.987f && current_layer->m_flWeight < 0.01f && previous_layer->m_flWeight < 0.01f && !(player->GetSequenceActivity(current_layer->m_nSequence) == 979))
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY;
 			record->m_resolver_mode = XorStr("LBY");
@@ -435,7 +427,7 @@ namespace Engine {
 			return;
 		}
 		// cycle check to make sure we dont miss delayed (> 1.1) break timers.
-		else if (current_layer->m_flCycle < 0.1f && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget) // literally never misses :O
+		else if (current_layer->m_flCycle < 0.25f && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget) // literally never misses :O
 		{
 			record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
 			record->m_resolver_mode = XorStr("FLICK");

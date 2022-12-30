@@ -325,7 +325,7 @@ namespace Engine
 		record->m_fFlags = player->m_fFlags();
 		record->m_flDuckAmount = player->m_flDuckAmount();
 
-		record->m_bIsShoting = false;
+		record->m_bIsShooting = false;
 		record->m_flShotTime = 0.0f;
 		record->m_bFakeWalking = false;
 		record->m_bFakeFlicking = false;
@@ -342,7 +342,7 @@ namespace Engine
 		if (!previous_record.IsValid()) {
 			record->m_bIsInvalid = true;
 			record->m_vecVelocity.Init();
-			record->m_bIsShoting = false;
+			record->m_bIsShooting = false;
 			record->m_bTeleportDistance = false;
 
 			//auto animstate = player->m_PlayerAnimState( );
@@ -351,24 +351,24 @@ namespace Engine
 
 			return;
 		}
-
 		/*auto flPreviousSimulationTime = previous_record->m_flSimulationTime;
 		auto nTickcountDelta = pThis->m_iCurrentTickCount - pThis->m_iOldTickCount;
 		auto nSimTicksDelta = record->m_iChokeTicks;
 		auto nChokedTicksUnk = nSimTicksDelta;
 		auto bShiftedTickbase = false;
-		if( pThis->m_flOldSimulationTime > pThis->m_flSimulationTime ) {
+
+		if (pThis->m_flOldSimulationTime > pThis->m_flSimulationTime) {
 			record->m_bShiftingTickbase = true;
 			record->m_iChokeTicks = nTickcountDelta;
-			record->m_flChokeTime = TICKS_TO_TIME( record->m_iChokeTicks );
+			record->m_flChokeTime = TICKS_TO_TIME(record->m_iChokeTicks);
 			flPreviousSimulationTime = record->m_flSimulationTime - record->m_flChokeTime;
 			nChokedTicksUnk = nTickcountDelta;
 			bShiftedTickbase = true;
 		}
 
-		if( bShiftedTickbase || abs( nSimTicksDelta - nTickcountDelta ) <= 2 ) {
-			if( nChokedTicksUnk ) {
-				if( nChokedTicksUnk != 1 ) {
+		if (bShiftedTickbase || abs(nSimTicksDelta - nTickcountDelta) <= 2) {
+			if (nChokedTicksUnk) {
+				if (nChokedTicksUnk != 1) {
 					pThis->m_iTicksUnknown = 0;
 				}
 				else {
@@ -383,18 +383,19 @@ namespace Engine
 
 				pThis->m_iTicksUnknown++;
 			}
-		}*/
+		}
+		*/
 
 		if (weapon) {
 			record->m_flShotTime = weapon->m_fLastShotTime();
-			record->m_bIsShoting = record->m_flSimulationTime >= record->m_flShotTime && record->m_flShotTime > previous_record->m_flSimulationTime;
+			record->m_bIsShooting = TIME_TO_TICKS(weapon->m_fLastShotTime()) >= TIME_TO_TICKS(record->m_flSimulationTime) - 1;
 		}
 
 		record->m_bIsInvalid = false;
 
 		// fix velocity
 		// https://github.com/VSES/SourceEngine2007/blob/master/se2007/game/client/c_baseplayer.cpp#L659
-		if (record->m_iChokeTicks > 0 && record->m_iChokeTicks < 16 && pThis->m_AnimationRecord.size() >= 2) {
+		if (record->m_iChokeTicks > 0 && record->m_iChokeTicks <= 16 && pThis->m_AnimationRecord.size() >= 2) {
 			record->m_vecVelocity = (record->m_vecOrigin - previous_record->m_vecOrigin) * (1.f / record->m_flChokeTime);
 		}
 
@@ -545,7 +546,7 @@ namespace Engine
 
 				g_Resolver.ResolveYaw(player, current.Xor());
 
-				g_Resolver.MatchShot(player, current.Xor());
+				g_Resolver.MatchShot(player, current.Xor(), previous.Xor());
 
 				// predict lby updates
 				g_Resolver.PredictBodyUpdates(player, current.Xor(), previous.Xor());

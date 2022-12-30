@@ -225,7 +225,7 @@ namespace Engine
 		record->m_flDuckAmount = anim_record->m_flDuckAmount;
 		record->m_flEyeYaw = anim_record->m_angEyeAngles.yaw;
 		record->m_flEyePitch = anim_record->m_angEyeAngles.pitch;
-		record->m_bIsShoting = anim_record->m_bIsShoting;
+		record->m_bIsShoting = anim_record->m_bIsShooting;
 		record->m_bIsValid = !anim_record->m_bIsInvalid;
 		record->m_bBonesCalculated = anim_data->m_bBonesCalculated;
 		record->m_flAnimationVelocity = player->m_PlayerAnimState()->m_velocity;
