@@ -58,7 +58,6 @@ namespace Engine {
 		bool bFacingright;
 		bool bFacingleft;
 	public:
-		//void ResolveManual(C_CSPlayer* player, C_AnimationRecord* record, bool resolved);
 		void ResolveYaw(C_CSPlayer* player, C_AnimationRecord* record);
 		void PredictBodyUpdates(C_CSPlayer* player, C_AnimationRecord* record, C_AnimationRecord* prev);
 		void ResolvePoses(C_CSPlayer* player, C_AnimationRecord* record);

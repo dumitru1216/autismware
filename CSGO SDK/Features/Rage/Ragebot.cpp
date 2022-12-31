@@ -733,7 +733,7 @@ namespace Interfaces
 		if (!pMatrix)
 			return false;
 
-		const auto maxTraces = 256;
+		const auto maxTraces = 128;
 		auto hits = 0;
 		CGameTrace tr;
 		for (int i = 0; i < maxTraces; ++i) {

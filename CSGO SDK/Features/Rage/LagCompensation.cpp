@@ -134,7 +134,7 @@ namespace Engine
 
 		// calculate difference between tick sent by player and our latency based tick.
 		// ensure this record isn't too old.
-		return std::abs(correct - (curtime - record.m_flSimulationTime)) < 0.19f;
+		return std::abs(correct - (curtime - record.m_flSimulationTime)) < (0.2f - Interfaces::m_pGlobalVars->interval_per_tick);
 	}
 
 	void C_LagCompensation::SetupLerpTime() {

@@ -367,16 +367,6 @@ void CEsp::Indicators() {
 			indicators.push_back(ind);
 		}
 
-		if (g_Vars.rage.prefer_body.enabled && g_Vars.esp.indicator_baim) {
-			Indicator_t ind{ };
-			ind.color = ff15c27b;
-			ind.text = XorStr("BAIM");
-
-			indicators.push_back(ind);
-		}
-
-
-
 		if (indicators.empty())
 			return;
 
@@ -456,7 +446,6 @@ void CEsp::Keybinds() {
 
 	if (g_Vars.rage.enabled) {
 		AddBind(XorStr("Damage override"), g_Vars.rage.key_dmg_override);
-		AddBind(XorStr("Force baim"), g_Vars.rage.prefer_body);
 		AddBind(XorStr("Hitbox override"), g_Vars.rage.hitbox_override_bind);
 	}
 
@@ -465,7 +454,7 @@ void CEsp::Keybinds() {
 	}
 
 	if (g_Vars.misc.autopeek) {
-		AddBind(XorStr("Quickpeek assist"), g_Vars.misc.autopeek_bind);
+		AddBind(XorStr("Auto peek"), g_Vars.misc.autopeek_bind);
 	}
 
 	if (g_Vars.misc.slow_walk) {

@@ -649,11 +649,8 @@ public:
 	//	config_keybind( hide_shots_bind );
 	//	config_option( bool, break_lagcomp, false );
 
-	config_keybind(prefer_body);
 	config_keybind(prefer_head);
 	config_keybind(prefer_safe);
-	config_keybind(override_reoslver);
-	config_keybind(override_reoslver_lock);
 	config_option(bool, override_resolver_flicks, false);
 
 	// temporary here

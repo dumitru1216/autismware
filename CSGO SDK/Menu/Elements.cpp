@@ -163,12 +163,6 @@ namespace Menu {
 					if (g_Vars.misc.zeus_bot || GUI::ctx->setup)
 						GUI::Controls::Slider(XorStr("Zeus bot hitchance"), &g_Vars.misc.zeus_bot_hitchance, 1.f, 80.f, XorStr("%.0f%%"));
 
-					GUI::Controls::Label(XorStr("Force bodyaim") + std::string(XorStr("#") + std::to_string(rage_current_group)));
-					GUI::Controls::Hotkey(XorStr("Force bodyaim key##key") + std::string(XorStr("#") + std::to_string(rage_current_group)), &g_Vars.rage.prefer_body);
-
-					GUI::Controls::Label(XorStr("Override resolver") + std::string(XorStr("#") + std::to_string(rage_current_group)));
-					GUI::Controls::Hotkey(XorStr("Override resolver key##key") + std::string(XorStr("#") + std::to_string(rage_current_group)), &g_Vars.rage.override_reoslver);
-
 				} GUI::Group::EndGroup();
 
 			}

@@ -40,7 +40,7 @@ namespace Engine {
 			if (record->m_iResolverMode == EResolverModes::RESOLVE_WALK)
 				ResolveWalk(player, record);
 
-			else if (record->m_iResolverMode == EResolverModes::RESOLVE_STAND && !g_Vars.rage.override_reoslver.enabled)
+			else if (record->m_iResolverMode == EResolverModes::RESOLVE_STAND)
 				ResolveStand(player, record);
 
 			else if (record->m_iResolverMode == EResolverModes::RESOLVE_AIR)
@@ -59,7 +59,7 @@ namespace Engine {
 
 		if ((record->m_fFlags & FL_ONGROUND) && speed > 0.1f && !record->m_bFakeWalking && !record->m_bFakeFlicking)
 			record->m_iResolverMode = EResolverModes::RESOLVE_WALK;
-		else if ((record->m_fFlags & FL_ONGROUND) && (speed <= 0.1f || record->m_bFakeWalking || record->m_bFakeFlicking) && !g_Vars.rage.override_reoslver.enabled)
+		else if ((record->m_fFlags & FL_ONGROUND) && (speed <= 0.1f || record->m_bFakeWalking || record->m_bFakeFlicking))
 			record->m_iResolverMode = EResolverModes::RESOLVE_STAND;
 		else
 			record->m_iResolverMode = EResolverModes::RESOLVE_AIR;
@@ -79,7 +79,7 @@ namespace Engine {
 
 		auto anim_data = AnimationSystem::Get()->GetAnimationData(player->m_entIndex);
 
-		if (anim_data->m_AnimationRecord.size() < 3)
+		if (anim_data->m_AnimationRecord.size() < 2)
 			return;
 
 		auto weapon = (C_WeaponCSBaseGun*)(player->m_hActiveWeapon().Get());
@@ -393,7 +393,7 @@ namespace Engine {
 		// get records.
 		auto anim_data = AnimationSystem::Get()->GetAnimationData(player->m_entIndex);
 
-		if (anim_data->m_AnimationRecord.size() < 3)
+		if (anim_data->m_AnimationRecord.size() < 2)
 			return;
 
 		C_AnimationLayer* current_layer = &player->m_AnimOverlay()[3];
@@ -403,16 +403,6 @@ namespace Engine {
 		if (record->m_vecVelocity.Length() > 0.1f) {
 			// predict the first flick they have to do after they stop moving
 			Engine::g_ResolverData[player->EntIndex()].m_flNextBodyUpdate = player->m_flAnimationTime() + 0.22f;
-			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
-			return;
-		}
-
-		// we have no reliable move data
-		if (!Engine::g_ResolverData[player->EntIndex()].m_bCollectedValidMoveData && current_layer->m_flCycle < 0.1f && record->m_flLowerBodyYawTarget != prev->m_flLowerBodyYawTarget)
-		{
-			record->m_iResolverMode = EResolverModes::RESOLVE_LBY_UPDATE;
-			record->m_resolver_mode = XorStr("FLICK");
-			record->m_angEyeAngles.y = record->m_angLastFlick.y = player->m_angEyeAngles().y = player->m_flLowerBodyYawTarget();
 			Engine::g_ResolverData[player->EntIndex()].m_bPredictingUpdates = false;
 			return;
 		}
@@ -507,29 +497,7 @@ namespace Engine {
 		else
 			record->m_angEyeAngles.y = player->m_angEyeAngles().y = angAway.y + 180.f;
 	}
-	/*
-	void CResolver::ResolveManual(C_CSPlayer* player, C_AnimationRecord* record, bool resolved)
-	{
-		auto local = C_CSPlayer::GetLocalPlayer();
-		if (!local)
-			return;
 
-		if (!g_Vars.rage.override_reoslver.enabled)
-			return;
-
-		if (resolved)
-			return;
-
-		QAngle viewangles;
-		Interfaces::m_pEngine->GetViewAngles(viewangles);
-
-		const float at_target_yaw = Math::CalcAngle(local->m_vecOrigin(), player->m_vecOrigin(), true).y;
-
-		record->m_iResolverMode = EResolverModes::RESOLVE_OVERRIDE;
-		record->m_resolver_mode = XorStr("OVERRIDE");
-		record->m_angEyeAngles.y = (Math::AngleNormalize(viewangles.y - at_target_yaw) > 0) ? at_target_yaw + 90.f : at_target_yaw - 90.f;
-	}
-	*/
 	void CResolver::ResolvePoses(C_CSPlayer* player, C_AnimationRecord* record)
 	{
 		if (record->m_iResolverMode == EResolverModes::RESOLVE_AIR) {

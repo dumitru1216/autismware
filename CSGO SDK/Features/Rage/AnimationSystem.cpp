@@ -388,7 +388,7 @@ namespace Engine
 
 		if (weapon) {
 			record->m_flShotTime = weapon->m_fLastShotTime();
-			record->m_bIsShooting = TIME_TO_TICKS(weapon->m_fLastShotTime()) >= TIME_TO_TICKS(record->m_flSimulationTime) - 1;
+			record->m_bIsShooting = TIME_TO_TICKS(weapon->m_fLastShotTime()) >= TIME_TO_TICKS(record->m_flSimulationTime) - record->m_iChokeTicks;
 		}
 
 		record->m_bIsInvalid = false;
@@ -561,11 +561,6 @@ namespace Engine
 				}
 				else
 					current.Xor()->m_bResolved = current.Xor()->m_iResolverMode == EResolverModes::RESOLVE_LBY_UPDATE;
-
-				bool bResolved = current.Xor()->m_bResolved;
-
-				// if the enemy is resolved, why bother overriding?
-				//g_Resolver.ResolveManual(player, current.Xor(), bResolved);
 			}
 
 			player->UpdateClientSideAnimationEx();
